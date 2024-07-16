@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DudiController;
+use App\Http\Controllers\PembimbingController;
 use App\Http\Controllers\SiswaController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -46,4 +47,14 @@ Route::name('dudi.')->prefix('dudi')->group(function () {
     Route::put('/{id}', [DudiController::class, 'update'])->name('update');
     Route::delete('/{id}', [DudiController::class, 'destroy'])->name('destroy');
     Route::post('/delete-multiple', [DudiController::class, 'destroyMultiple'])->name('destroyMultiple');
+});
+
+
+Route::name('pembimbing.')->prefix('pembimbing')->group(function () {
+    Route::get('/', [PembimbingController::class, 'index'])->name('index');
+    Route::get('/{id}', [PembimbingController::class, 'show'])->name('show');
+    Route::post('/', [PembimbingController::class, 'store'])->name('store');
+    Route::put('/{id}', [PembimbingController::class, 'update'])->name('update');
+    Route::delete('/{id}', [PembimbingController::class, 'destroy'])->name('destroy');
+    Route::post('/delete-multiple', [PembimbingController::class, 'destroyMultiple'])->name('destroyMultiple');
 });
