@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\DudiController;
 use App\Http\Controllers\SiswaController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -36,4 +37,13 @@ Route::name('siswa.')->prefix('siswa')->group(function () {
     Route::put('/{id}', [SiswaController::class, 'update'])->name('update');
     Route::delete('/{id}', [SiswaController::class, 'destroy'])->name('destroy');
     Route::post('/delete-multiple', [SiswaController::class, 'destroyMultiple'])->name('destroyMultiple');
+});
+
+Route::name('dudi.')->prefix('dudi')->group(function () {
+    Route::get('/', [DudiController::class, 'index'])->name('index');
+    Route::get('/{id}', [DudiController::class, 'show'])->name('show');
+    Route::post('/', [DudiController::class, 'store'])->name('store');
+    Route::put('/{id}', [DudiController::class, 'update'])->name('update');
+    Route::delete('/{id}', [DudiController::class, 'destroy'])->name('destroy');
+    Route::post('/delete-multiple', [DudiController::class, 'destroyMultiple'])->name('destroyMultiple');
 });
