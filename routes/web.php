@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\FrontEnd\CategoriesController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -17,6 +18,12 @@ use Illuminate\Support\Facades\Route;
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->name('dashboard');
+
+// routes/web.php
+Route::name('categories.')->prefix('frontend/category')->group(function () {
+    Route::get('/', [CategoriesController::class, 'index'])->name('index');
+    Route::get('/{id}', [CategoriesController::class, 'show'])->whereNumber('id')->name('show');
+});
 
 Route::post('/logout', function () {
     Auth::logout();
