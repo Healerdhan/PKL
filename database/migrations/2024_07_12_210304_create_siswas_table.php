@@ -18,8 +18,11 @@ class CreateSiswasTable extends Migration
             $table->string('nama_siswa');
             $table->string('jenis_kelamin');
             $table->integer('NISN')->default(50);
+            $table->string('alamat');
             $table->string('tempat_lahir');
             $table->date('tanggal_lahir');
+            $table->decimal('latitude', 10, 7)->nullable();
+            $table->decimal('longitude', 10, 7)->nullable();
             $table->unsignedBigInteger('category_id');
             $table->timestamps();
 

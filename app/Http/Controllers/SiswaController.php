@@ -11,6 +11,7 @@ use App\Traits\RequestFilter;
 use App\Traits\ResponseFormatter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class SiswaController extends Controller
@@ -20,33 +21,40 @@ class SiswaController extends Controller
     public function index(Request $request)
     {
         try {
-            $query = Siswa::query();
-            $query = $this->filter($query, $request->all());
+            $siswas = Siswa::query();
 
-            $query->join('categories', 'siswas.category_id', '=', 'categories.id')
-                ->select('siswas.*', 'categories.jurusan');
+            // Load relationships
+            $siswas->with('category');
 
-            if ($request->has('nama_siswa')) {
-                $query->where('siswas.nama_siswa', 'like', '%' . $request->nama_siswa . '%');
-            }
+            $siswas = $siswas->get();
 
-            if ($request->has('NISN')) {
-                $query->where('siswas.NISN', '=', $request->NISN);
-            }
-
-            $perPage = $this->getLimit();
-            $page = $this->getPage();
-
-            if ($perPage) {
-                $siswas = $query->paginate($perPage, ['*'], 'page', $page);
-                throw new Error($siswas['code'], $siswas['message'], $siswas['error']);
-            }
-
-            $siswas = $query->get();
-            if (!$siswas) {
+            // Check if there is any data
+            if ($siswas->isEmpty()) {
                 throw new Error(422, 'Data Not Found');
-                // throw new Error($data['code'], $data['message'], $data['error']);
             }
+
+            $latitude = $request->input('latitude');
+            $longitude = $request->input('longitude');
+
+            if ($latitude && $longitude) {
+                $siswas = $siswas->map(function ($siswa) use ($latitude, $longitude) {
+                    $distance = $siswa->calculateDistance($latitude, $longitude);
+                    return [
+                        'id' => $siswa->id,
+                        'nama_siswa' => $siswa->nama_siswa,
+                        'jenis_kelamin' => $siswa->jenis_kelamin,
+                        'NISN' => $siswa->NISN,
+                        'alamat' => $siswa->alamat,
+                        'tempat_lahir' => $siswa->tempat_lahir,
+                        'tanggal_lahir' => $siswa->tanggal_lahir,
+                        'latitude' => $siswa->latitude,
+                        'longitude' => $siswa->longitude,
+                        'category' => $siswa->category,
+                        'distance' => $distance
+                    ];
+                });
+            }
+
             return $this->success(Code::SUCCESS, $siswas, Message::successGet);
         } catch (Error | \Exception $e) {
             return $this->error(new Error(Code::SERVER_ERROR, Message::internalServerError, $e->getMessage()), false);
@@ -62,8 +70,11 @@ class SiswaController extends Controller
                 'nama_siswa' => 'required|string',
                 'jenis_kelamin' => 'required|string',
                 'NISN' => 'required|integer|unique:siswas,NISN',
+                'alamat' => 'required|string',
                 'tempat_lahir' => 'required|string',
                 'tanggal_lahir' => 'required|date',
+                'latitude' => 'nullable|numeric',
+                'longitude' => 'nullable|numeric',
                 'category_id' => 'required|exists:categories,id',
             ]);
 
@@ -78,6 +89,9 @@ class SiswaController extends Controller
                 'NISN' => $request->NISN,
                 'tempat_lahir' => $request->tempat_lahir,
                 'tanggal_lahir' => $request->tanggal_lahir,
+                'alamat' => $request->alamat,
+                'latitude' => $request->latitude,
+                'longitude' => $request->longitude,
                 'category_id' => $request->category_id,
             ]);
             if (!$siswa) {
@@ -93,7 +107,7 @@ class SiswaController extends Controller
     }
 
 
-    public function show($id)
+    public function show(Request $request, $id)
     {
         try {
             $siswa = Siswa::with('category')->findOrFail($id);
@@ -101,6 +115,13 @@ class SiswaController extends Controller
                 throw new Error(422, 'Data Not Found');
                 // throw new Error($siswa['code'], $siswa['message'], $siswa['error']);
             }
+
+            if ($request->has('latitude') && $request->has('longitude')) {
+                $latitude = $request->input('latitude');
+                $longitude = $request->input('longitude');
+                $siswa->distance = $siswa->calculateDistance($latitude, $longitude);
+            }
+
             return $this->success(Code::SUCCESS, $siswa, Message::successGet);
         } catch (Error | \Exception $e) {
             return $this->error(new Error(Code::NOT_FOUND, Message::notFound, $e->getMessage()), false);
@@ -118,6 +139,9 @@ class SiswaController extends Controller
                 'NISN' => 'required|integer|unique:siswas,NISN,' . $id,
                 'tempat_lahir' => 'required|string',
                 'tanggal_lahir' => 'required|date',
+                'alamat' => 'required|string',
+                'latitude' => 'nullable|numeric',
+                'longitude' => 'nullable|numeric',
                 'category_id' => 'required|exists:categories,id',
             ]);
 
@@ -132,6 +156,9 @@ class SiswaController extends Controller
                 'NISN' => $request->NISN,
                 'tempat_lahir' => $request->tempat_lahir,
                 'tanggal_lahir' => $request->tanggal_lahir,
+                'alamat' => $request->alamat,
+                'latitude' => $request->latitude,
+                'longitude' => $request->longitude,
                 'category_id' => $request->category_id,
             ]);
             if (!$siswa) {
