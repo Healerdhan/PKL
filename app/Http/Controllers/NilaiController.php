@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Exceptions\Error;
 use App\Helpers\Code;
 use App\Helpers\Message;
-use App\Models\Category;
+use App\Models\Nilai;
 use App\Traits\PaginationResponse;
 use App\Traits\RequestFilter;
 use App\Traits\ResponseFormatter;
@@ -13,26 +13,43 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
-class CategoryController extends Controller
+class NilaiController extends Controller
 {
-    use ResponseFormatter, RequestFilter, PaginationResponse;
+
+    use ResponseFormatter, PaginationResponse, RequestFilter;
 
     public function index(Request $request)
     {
         try {
-            $query = Category::query();
-            $query = $this->filter($query, $request->all());
+            $query = Nilai::with(['siswa' => function ($query) {
+                $query->select('id', 'nama_siswa');
+            }, 'subject' => function ($query) {
+                $query->select('id', 'nama', 'type');
+            }]);
+
+            $nilai = $query->get()->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'nilai' => $item->nilai,
+                    'siswa' => $item->siswa->nama_siswa,
+                    'subject' => [
+                        'nama' => $item->subject->nama,
+                        'type' => $item->subject->type
+                    ]
+                ];
+            });
+
+            $nilai = $this->filter($nilai, $request->all());
 
             $perPage = $this->getLimit();
             $page = $this->getPage();
 
             if ($perPage) {
-                $categories = $query->paginate($perPage, ['*'], 'page', $page);
-                return $this->paginateResponse(Code::SUCCESS, $categories->toArray(), Message::successGet);
+                $nil = $nilai->forPage($page, $perPage);
+                return $this->paginateResponse(Code::SUCCESS, $nil, Message::successGet);
             }
-            $categories = $query->get();
 
-            return $this->success(Code::SUCCESS, $categories, Message::successGet);
+            return $this->success(Code::SUCCESS, $nilai, Message::successGet);
         } catch (Error | \Exception $e) {
             return $this->error(new Error(Code::SERVER_ERROR, Message::internalServerError, $e->getMessage()), false);
         }
@@ -44,25 +61,24 @@ class CategoryController extends Controller
         DB::beginTransaction();
         try {
             $validator = Validator::make($request->all(), [
-                'jurusan' => 'required|string|max:255',
+                'siswa_id' => 'required|uuid|exists:siswas,id',
+                'subject_id' => 'required|uuid|exists:subjects,id',
+                'nilai' => 'required|integer|min:0|max:100',
             ]);
 
             if ($validator->fails()) {
                 throw new Error($validator['code'], $validator['message'], $validator['error']);
-                // return $this->error(new Error(Code::VALIDATION_ERROR, Message::errorCreate, $validator->errors()->first()), false);
             }
 
-            $category = Category::create([
-                'jurusan' => $request->jurusan,
-            ]);
-            if (!$category) {
+            $nilai = Nilai::create($request->all());
+            if (!$nilai) {
                 throw new Error(422, 'Failed To Add Data');
             }
 
             DB::commit();
-            return $this->success(Code::POST_SUCCESS, $category, Message::successCreate);
+            return $this->success(Code::POST_SUCCESS, $nilai, Message::successCreate);
         } catch (Error | \Exception $e) {
-            DB::rollBack();
+            DB::commit();
             return $this->error(new Error(Code::SERVER_ERROR, Message::errorCreate, $e->getMessage()), false);
         }
     }
@@ -71,11 +87,25 @@ class CategoryController extends Controller
     public function show($id)
     {
         try {
-            $category = Category::findOrFail($id);
-            if (!$category) {
-                throw new Error($category['code'], $category['message'], $category['error']);
+            $nilai = Nilai::with(['siswa' => function ($query) {
+                $query->select('id', 'nama_siswa');
+            }, 'subject' => function ($query) {
+                $query->select('id', 'nama', 'type');
+            }])->findOrFail($id);
+
+            $result = [
+                'id' => $nilai->id,
+                'nilai' => $nilai->nilai,
+                'siswa' => $nilai->siswa->nama_siswa,
+                'subject' => [
+                    'nama' => $nilai->subject->nama,
+                    'type' => $nilai->subject->type
+                ]
+            ];
+            if (!$result) {
+                throw new Error($result['code'], $result['message'], $result['error']);
             }
-            return $this->success(Code::SUCCESS, $category, Message::successGet);
+            return $this->success(Code::SUCCESS, $result, Message::successGet);
         } catch (Error | \Exception $e) {
             $errorMessage = $e->getMessage() ?: Message::notFound;
             return $this->error(new Error(Code::NOT_FOUND, Message::notFound, $errorMessage), false);
@@ -88,23 +118,23 @@ class CategoryController extends Controller
         DB::beginTransaction();
         try {
             $validator = Validator::make($request->all(), [
-                'jurusan' => 'required|string|unique:categories,jurusan,' . $id,
+                'siswa_id' => 'sometimes|required|uuid|exists:siswas,id',
+                'subject_id' => 'sometimes|required|uuid|exists:subjects,id',
+                'nilai' => 'sometimes|required|integer|min:0|max:100',
             ]);
 
             if ($validator->fails()) {
                 return $this->error(new Error(Code::VALIDATION_ERROR, Message::errorUpdate, $validator->errors()->first()), false);
             }
 
-            $category = Category::findOrFail($id);
-            $category->update([
-                'jurusan' => $request->jurusan,
-            ]);
-            if (!$category) {
-                throw new Error($category['code'], $category['message'], $category['error']);
+            $score = Nilai::findOrFail($id);
+            $score->update($request->all());
+            if (!$score) {
+                throw new Error($score['code'], $score['message'], $score['error']);
             }
 
             DB::commit();
-            return $this->success(Code::SUCCESS, $category, Message::successUpdate);
+            return $this->success(Code::SUCCESS, $score, Message::successUpdate);
         } catch (Error | \Exception $e) {
             DB::rollBack();
             return $this->error(new Error(Code::SERVER_ERROR, Message::errorUpdate, $e));
@@ -116,11 +146,10 @@ class CategoryController extends Controller
     {
         DB::beginTransaction();
         try {
-            $category = Category::findOrFail($id);
-            $category->delete();
-
-            if (!$category) {
-                throw new Error($category['code'], $category['message'], $category['error']);
+            $score = Nilai::findOrFail($id);
+            $score->delete();
+            if (!$score) {
+                throw new Error($score['code'], $score['message'], $score['error']);
             }
 
             DB::commit();
@@ -136,28 +165,22 @@ class CategoryController extends Controller
     {
         DB::beginTransaction();
         try {
-            // Validasi data
             $validator = Validator::make($request->all(), [
                 'ids' => 'required|array',
-                'ids.*' => 'exists:categories,id',
+                'ids.*' => 'exists:nilais,id',
             ]);
-
-            // Jika validasi gagal, kembalikan error
             if ($validator->fails()) {
                 return $this->error(new Error(Code::VALIDATION_ERROR, Message::errorDelete, $validator->errors()->first()), false);
             }
 
-            // Mendapatkan array id dari request
             $ids = $request->input('ids');
-
-            // Menghapus kategori berdasarkan id
-            Category::destroy($ids);
+            Nilai::destroy($ids);
 
             DB::commit();
             return $this->success(Code::SUCCESS, null, Message::successDelete);
-        } catch (\Exception $e) {
+        } catch (Error | \Exception $e) {
             DB::rollBack();
-            return $this->error(new Error(Code::SERVER_ERROR, Message::errorDelete, $e->getMessage()), false);
+            return $this->error(new Error(Code::SERVER_ERROR, Message::errorDelete, $e));
         }
     }
 }

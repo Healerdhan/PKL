@@ -64,4 +64,9 @@ class Siswa extends Model
             cos($latFrom) * cos($latTo) * pow(sin($lonDelta / 2), 2)));
         return $angle * $earthRadius;
     }
+
+    public function scores()
+    {
+        return $this->hasMany(Nilai::class);
+    }
 }

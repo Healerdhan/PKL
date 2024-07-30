@@ -17,7 +17,9 @@ class DatabaseSeeder extends Seeder
             CategorySeeder::class,
             SiswaSeeder::class,
             dudiSeeder::class,
-            PembimbingSeeder::class
+            PembimbingSeeder::class,
+            SubjectSeeder::class,
+            NilaiSeeder::class
         ]);
     }
 }

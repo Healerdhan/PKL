@@ -2,8 +2,10 @@
 
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DudiController;
+use App\Http\Controllers\NilaiController;
 use App\Http\Controllers\PembimbingController;
 use App\Http\Controllers\SiswaController;
+use App\Http\Controllers\SubjectController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -57,4 +59,22 @@ Route::name('pembimbing.')->prefix('pembimbing')->group(function () {
     Route::put('/{id}', [PembimbingController::class, 'update'])->name('update');
     Route::delete('/{id}', [PembimbingController::class, 'destroy'])->name('destroy');
     Route::post('/delete-multiple', [PembimbingController::class, 'destroyMultiple'])->name('destroyMultiple');
+});
+
+Route::name('subjec.')->prefix('subjec')->group(function () {
+    Route::get('/', [SubjectController::class, 'index'])->name('index');
+    Route::get('/{id}', [SubjectController::class, 'show'])->name('show');
+    Route::post('/', [SubjectController::class, 'store'])->name('store');
+    Route::put('/{id}', [SubjectController::class, 'update'])->name('update');
+    Route::delete('/{id}', [SubjectController::class, 'destroy'])->name('destroy');
+    Route::post('/delete-multiple', [SubjectController::class, 'destroyMultiple'])->name('destroyMultiple');
+});
+
+Route::name('nilai.')->prefix('nilai')->group(function () {
+    Route::get('/', [NilaiController::class, 'index'])->name('index');
+    Route::get('/{id}', [NilaiController::class, 'show'])->name('show');
+    Route::post('/', [NilaiController::class, 'store'])->name('store');
+    Route::put('/{id}', [NilaiController::class, 'update'])->name('update');
+    Route::delete('/{id}', [NilaiController::class, 'destroy'])->name('destroy');
+    Route::post('/delete-multiple', [NilaiController::class, 'destroyMultiple'])->name('destroyMultiple');
 });

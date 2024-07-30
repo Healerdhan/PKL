@@ -5,34 +5,36 @@ namespace App\Http\Controllers;
 use App\Exceptions\Error;
 use App\Helpers\Code;
 use App\Helpers\Message;
-use App\Models\Category;
+use App\Models\Subject;
 use App\Traits\PaginationResponse;
 use App\Traits\RequestFilter;
 use App\Traits\ResponseFormatter;
-use Illuminate\Http\Request;
+use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Http\Request;
 
-class CategoryController extends Controller
+class SubjectController extends Controller
 {
-    use ResponseFormatter, RequestFilter, PaginationResponse;
+
+    use ResponseFormatter, PaginationResponse, RequestFilter;
 
     public function index(Request $request)
     {
         try {
-            $query = Category::query();
-            $query = $this->filter($query, $request->all());
+            $subject = Subject::query();
+            $subject = $this->filter($subject, $request->all());
 
             $perPage = $this->getLimit();
             $page = $this->getPage();
 
             if ($perPage) {
-                $categories = $query->paginate($perPage, ['*'], 'page', $page);
-                return $this->paginateResponse(Code::SUCCESS, $categories->toArray(), Message::successGet);
+                $sub = $subject->paginate($perPage, ['*'], 'page', $page);
+                return $this->paginateResponse(Code::SUCCESS, $sub->toArray(), Message::successGet);
             }
-            $categories = $query->get();
+            $sub = $subject->get();
 
-            return $this->success(Code::SUCCESS, $categories, Message::successGet);
+            return $this->success(Code::SUCCESS, $sub, Message::successGet);
         } catch (Error | \Exception $e) {
             return $this->error(new Error(Code::SERVER_ERROR, Message::internalServerError, $e->getMessage()), false);
         }
@@ -44,23 +46,23 @@ class CategoryController extends Controller
         DB::beginTransaction();
         try {
             $validator = Validator::make($request->all(), [
-                'jurusan' => 'required|string|max:255',
+                'nama' => 'required|string|max:255',
+                'type' => 'required|in:Non-Teknis,Teknis',
             ]);
-
             if ($validator->fails()) {
                 throw new Error($validator['code'], $validator['message'], $validator['error']);
-                // return $this->error(new Error(Code::VALIDATION_ERROR, Message::errorCreate, $validator->errors()->first()), false);
             }
 
-            $category = Category::create([
-                'jurusan' => $request->jurusan,
+            $subject = Subject::create([
+                'nama' => $request->nama,
+                'type' => $request->type
             ]);
-            if (!$category) {
+            if (!$subject) {
                 throw new Error(422, 'Failed To Add Data');
             }
 
             DB::commit();
-            return $this->success(Code::POST_SUCCESS, $category, Message::successCreate);
+            return $this->success(Code::POST_SUCCESS, $subject, Message::successCreate);
         } catch (Error | \Exception $e) {
             DB::rollBack();
             return $this->error(new Error(Code::SERVER_ERROR, Message::errorCreate, $e->getMessage()), false);
@@ -71,11 +73,12 @@ class CategoryController extends Controller
     public function show($id)
     {
         try {
-            $category = Category::findOrFail($id);
-            if (!$category) {
-                throw new Error($category['code'], $category['message'], $category['error']);
+            $subject = Subject::findOrFail($id);
+            if (!$subject) {
+                // throw new Error($subject['code'], $subject['message'], $subject['error']);
+                throw new Error(422, 'Not Found');
             }
-            return $this->success(Code::SUCCESS, $category, Message::successGet);
+            return $this->success(Code::SUCCESS, $subject, Message::successGet);
         } catch (Error | \Exception $e) {
             $errorMessage = $e->getMessage() ?: Message::notFound;
             return $this->error(new Error(Code::NOT_FOUND, Message::notFound, $errorMessage), false);
@@ -88,23 +91,22 @@ class CategoryController extends Controller
         DB::beginTransaction();
         try {
             $validator = Validator::make($request->all(), [
-                'jurusan' => 'required|string|unique:categories,jurusan,' . $id,
+                'nama' => 'sometimes|required|string|max:255',
+                'type' => 'sometimes|required|in:Non-Teknis,Teknis',
             ]);
 
             if ($validator->fails()) {
                 return $this->error(new Error(Code::VALIDATION_ERROR, Message::errorUpdate, $validator->errors()->first()), false);
             }
 
-            $category = Category::findOrFail($id);
-            $category->update([
-                'jurusan' => $request->jurusan,
-            ]);
-            if (!$category) {
-                throw new Error($category['code'], $category['message'], $category['error']);
+            $subject = Subject::findOrFail($id);
+            $subject->update($request->all());
+            if (!$subject) {
+                throw new Error($subject['code'], $subject['message'], $subject['error']);
             }
 
             DB::commit();
-            return $this->success(Code::SUCCESS, $category, Message::successUpdate);
+            return $this->success(Code::SUCCESS, $subject, Message::successUpdate);
         } catch (Error | \Exception $e) {
             DB::rollBack();
             return $this->error(new Error(Code::SERVER_ERROR, Message::errorUpdate, $e));
@@ -116,11 +118,11 @@ class CategoryController extends Controller
     {
         DB::beginTransaction();
         try {
-            $category = Category::findOrFail($id);
-            $category->delete();
+            $subject = Subject::findOrFail($id);
+            $subject->delete();
 
-            if (!$category) {
-                throw new Error($category['code'], $category['message'], $category['error']);
+            if (!$subject) {
+                throw new Error($subject['code'], $subject['message'], $subject['error']);
             }
 
             DB::commit();
@@ -136,26 +138,20 @@ class CategoryController extends Controller
     {
         DB::beginTransaction();
         try {
-            // Validasi data
             $validator = Validator::make($request->all(), [
                 'ids' => 'required|array',
-                'ids.*' => 'exists:categories,id',
+                'ids.*' => 'exists:subjects,id',
             ]);
-
-            // Jika validasi gagal, kembalikan error
             if ($validator->fails()) {
                 return $this->error(new Error(Code::VALIDATION_ERROR, Message::errorDelete, $validator->errors()->first()), false);
             }
 
-            // Mendapatkan array id dari request
             $ids = $request->input('ids');
-
-            // Menghapus kategori berdasarkan id
-            Category::destroy($ids);
+            Subject::destroy($ids);
 
             DB::commit();
             return $this->success(Code::SUCCESS, null, Message::successDelete);
-        } catch (\Exception $e) {
+        } catch (Error | \Exception $e) {
             DB::rollBack();
             return $this->error(new Error(Code::SERVER_ERROR, Message::errorDelete, $e->getMessage()), false);
         }
