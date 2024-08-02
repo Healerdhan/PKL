@@ -7,8 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
-
-class Nilai extends Model
+class Sertifikat extends Model
 {
     use HasFactory, HasUuids;
 
@@ -16,7 +15,17 @@ class Nilai extends Model
     protected $keyType = 'string';
     public $incrementing = false;
 
-    protected $fillable = ['siswa_id', 'subject_id', 'nilai'];
+    protected $fillable = [
+        'siswa_id',
+        'dudi_id',
+        'kompetensi_keahlian',
+        'alamat_tempat_pkl',
+        'tanggal_mulai',
+        'tanggal_selesai',
+        'nilai_id',
+        'predikat',
+    ];
+
 
     protected static function boot()
     {
@@ -34,13 +43,13 @@ class Nilai extends Model
         return $this->belongsTo(Siswa::class);
     }
 
-    public function subject()
+    public function dudi()
     {
-        return $this->belongsTo(Subject::class);
+        return $this->belongsTo(Dudi::class);
     }
 
-    public function sertifikats()
+    public function nilai()
     {
-        return $this->hasMany(Sertifikat::class);
+        return $this->belongsTo(Nilai::class);
     }
 }

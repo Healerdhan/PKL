@@ -19,7 +19,8 @@ class DatabaseSeeder extends Seeder
             dudiSeeder::class,
             PembimbingSeeder::class,
             SubjectSeeder::class,
-            NilaiSeeder::class
+            NilaiSeeder::class,
+            SertifikatSeeder::class
         ]);
     }
 }

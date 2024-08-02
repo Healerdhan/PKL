@@ -69,4 +69,9 @@ class Siswa extends Model
     {
         return $this->hasMany(Nilai::class);
     }
+
+    public function sertifikats()
+    {
+        return $this->hasMany(Sertifikat::class);
+    }
 }

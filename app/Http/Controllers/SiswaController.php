@@ -22,13 +22,9 @@ class SiswaController extends Controller
     {
         try {
             $siswas = Siswa::query();
-
-            // Load relationships
             $siswas->with('category');
 
             $siswas = $siswas->get();
-
-            // Check if there is any data
             if ($siswas->isEmpty()) {
                 throw new Error(422, 'Data Not Found');
             }
