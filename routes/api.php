@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DudiController;
 use App\Http\Controllers\NilaiController;
@@ -7,6 +8,7 @@ use App\Http\Controllers\PembimbingController;
 use App\Http\Controllers\SertifikatController;
 use App\Http\Controllers\SiswaController;
 use App\Http\Controllers\SubjectController;
+use App\Http\Controllers\UserController;
 use App\Models\Sertifikat;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -88,4 +90,33 @@ Route::name('sertifikat.')->prefix('sertifikat')->group(function () {
     Route::put('/{id}', [SertifikatController::class, 'update'])->name('update');
     Route::delete('/{id}', [SertifikatController::class, 'destroy'])->name('destroy');
     Route::post('/delete-multiple', [SertifikatController::class, 'destroyMultiple'])->name('destroyMultiple');
+});
+
+Route::get('/users', [UserController::class, 'index']);
+Route::get('/users/{id}', [UserController::class, 'show']);
+Route::post('/users', [UserController::class, 'store']);
+Route::put('/users/{id}', [UserController::class, 'update']);
+Route::delete('/users/{id}', [UserController::class, 'destroy']);
+
+
+Route::post('register', [AuthController::class, 'register']);
+Route::post('login', [AuthController::class, 'login']);
+
+Route::middleware(['jwt.verify'])->group(function () {
+    Route::post('logout', [AuthController::class, 'logout']);
+    Route::post('refresh', [AuthController::class, 'refresh']);
+    Route::get('me', [AuthController::class, 'me']);
+});
+
+
+Route::middleware(['role:Super Admin'])->group(function () {
+    // Route yang hanya bisa diakses oleh Super Admin
+});
+
+Route::middleware(['role:Admin'])->group(function () {
+    // Route yang bisa diakses oleh Admin dan Super Admin
+});
+
+Route::middleware(['role:User'])->group(function () {
+    // Route yang bisa diakses oleh semua user termasuk Admin dan Super Admin
 });
