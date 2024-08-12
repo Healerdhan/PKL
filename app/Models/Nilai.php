@@ -10,7 +10,7 @@ use Illuminate\Support\Str;
 
 class Nilai extends Model
 {
-    use HasFactory, HasUuids;
+    use HasFactory;
 
     protected $guarded = [];
     protected $keyType = 'string';

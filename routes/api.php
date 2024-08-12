@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DudiController;
 use App\Http\Controllers\NilaiController;
@@ -29,7 +29,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 Route::name('category.')->prefix('category')->group(function () {
-    Route::get('/', [CategoryController::class, 'index'])->name('index');
+    // Route::get('/', [CategoryController::class, 'index'])->name('index');
     Route::get('/{id}', [CategoryController::class, 'show'])->whereNumber('id')->name('show');
     Route::post('/', [CategoryController::class, 'store'])->name('store');
     Route::put('/{id}', [CategoryController::class, 'update'])->whereNumber('id')->name('update');
@@ -92,6 +92,14 @@ Route::name('sertifikat.')->prefix('sertifikat')->group(function () {
     Route::post('/delete-multiple', [SertifikatController::class, 'destroyMultiple'])->name('destroyMultiple');
 });
 
+// Route::name('user.')->prefix('user')->group(function () {
+//     Route::get('/', [UserController::class, 'index'])->name('index');
+//     Route::get('/{id}', [UserController::class, 'show'])->name('show');
+//     Route::post('/', [UserController::class, 'store'])->name('store');
+//     Route::put('/{id}', [UserController::class, 'update'])->name('update');
+//     Route::delete('/{id}', [UserController::class, 'destroy'])->name('destroy');
+// });
+
 Route::get('/users', [UserController::class, 'index']);
 Route::get('/users/{id}', [UserController::class, 'show']);
 Route::post('/users', [UserController::class, 'store']);
@@ -109,8 +117,9 @@ Route::middleware(['jwt.verify'])->group(function () {
 });
 
 
-Route::middleware(['role:Super Admin'])->group(function () {
+Route::middleware(['jwt.auth', 'role:Super Admin'])->group(function () {
     // Route yang hanya bisa diakses oleh Super Admin
+    Route::get('/category', [CategoryController::class, 'index'])->name('index');
 });
 
 Route::middleware(['role:Admin'])->group(function () {
