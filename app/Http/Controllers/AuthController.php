@@ -40,7 +40,7 @@ class AuthController extends Controller
             return response()->json($user, 201);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['error' => 'Failed to register user.'], 500);
+            return response()->json(['error' => $e->getMessage()], 500);
         }
     }
 
