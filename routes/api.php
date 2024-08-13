@@ -29,7 +29,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 Route::name('category.')->prefix('category')->group(function () {
-    // Route::get('/', [CategoryController::class, 'index'])->name('index');
+    Route::get('/', [CategoryController::class, 'index'])->name('index');
     Route::get('/{id}', [CategoryController::class, 'show'])->whereNumber('id')->name('show');
     Route::post('/', [CategoryController::class, 'store'])->name('store');
     Route::put('/{id}', [CategoryController::class, 'update'])->whereNumber('id')->name('update');
@@ -119,13 +119,12 @@ Route::middleware(['jwt.verify'])->group(function () {
 
 Route::middleware(['jwt.auth', 'role:Super Admin'])->group(function () {
     // Route yang hanya bisa diakses oleh Super Admin
-    Route::get('/category', [CategoryController::class, 'index'])->name('index');
 });
 
-Route::middleware(['role:Admin'])->group(function () {
+Route::middleware(['jwt.auth', 'role:Admin'])->group(function () {
     // Route yang bisa diakses oleh Admin dan Super Admin
 });
 
-Route::middleware(['role:User'])->group(function () {
+Route::middleware(['jwt.auth', 'role:User'])->group(function () {
     // Route yang bisa diakses oleh semua user termasuk Admin dan Super Admin
 });
