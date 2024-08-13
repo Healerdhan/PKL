@@ -5,6 +5,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DudiController;
 use App\Http\Controllers\NilaiController;
 use App\Http\Controllers\PembimbingController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SertifikatController;
 use App\Http\Controllers\SiswaController;
 use App\Http\Controllers\SubjectController;
@@ -105,6 +106,9 @@ Route::get('/users/{id}', [UserController::class, 'show']);
 Route::post('/users', [UserController::class, 'store']);
 Route::put('/users/{id}', [UserController::class, 'update']);
 Route::delete('/users/{id}', [UserController::class, 'destroy']);
+
+
+Route::middleware('auth:api')->get('/profile', [ProfileController::class, 'show']);
 
 
 Route::post('register', [AuthController::class, 'register']);

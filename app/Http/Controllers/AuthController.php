@@ -46,29 +46,69 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        // Validasi input dari request
         $validator = Validator::make($request->all(), [
             'email' => 'required|string|email',
             'password' => 'required|string|min:8',
         ]);
+
         if ($validator->fails()) {
             return response()->json($validator->errors(), 400);
         }
 
-
-        $credentials = $request->only('email', 'password');
-
+        DB::beginTransaction();
         try {
+            $credentials = $request->only('email', 'password');
+
             if (!$token = JWTAuth::attempt($credentials)) {
                 return response()->json(['error' => 'Unauthorized'], 401);
             }
+
+            $user = Auth::user();
+
+            $role = $user->roles->first()->name ?? null;
+            $permissions = $user->permissions->pluck('name');
+
+            // Buat refresh token
+            $refreshToken = $this->createRefreshToken($user);
+
+            // Commit transaksi setelah semua proses berhasil
+            DB::commit();
+
+            // Format respons JSON
+            $response = [
+                'success' => true,
+                'code' => 200,
+                'message' => 'Berhasil Login',
+                'error' => null,
+                'data' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'image' => $user->image, // Pastikan Anda memiliki kolom `image` di tabel pengguna
+                    'role' => $role,
+                    'permissions' => $permissions,
+                    'token' => $token,
+                    'type' => 'Bearer',
+                    'expired_at' => now()->addMinutes(config('jwt.ttl'))->toDateTimeString(),
+                    'refresh_token' => $refreshToken,
+                    'refresh_token_expired_at' => now()->addMinutes(config('jwt.refresh_ttl'))->toDateTimeString(),
+                ],
+            ];
+
+            return response()->json($response);
         } catch (JWTException $e) {
-
-            return response()->json(['error' => 'Could not create token'], 500);
+            DB::rollBack();
+            return response()->json(['error' => 'Could not create token: ' . $e->getMessage()], 500);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['error' => 'An error occurred: ' . $e->getMessage()], 500);
         }
+    }
 
 
-        return response()->json(['token' => $token]);
+    private function createRefreshToken($user)
+    {
+        return 'dummy-refresh-token';
     }
 
 

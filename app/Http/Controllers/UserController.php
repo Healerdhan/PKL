@@ -41,6 +41,7 @@ class UserController extends Controller
                 'name' => 'required|string|max:255',
                 'email' => 'required|string|email|max:255|unique:users',
                 'password' => 'required|string|min:8|confirmed',
+                'image' => 'nullable|string|max:255',
                 'role' => 'required|in:super-admin,admin,user',
             ]);
 
@@ -52,6 +53,7 @@ class UserController extends Controller
                 'name' => $request->name,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
+                'image' => $request->image,
             ]);
 
             $user->assignRole($request->role);
@@ -85,6 +87,7 @@ class UserController extends Controller
                 'name' => 'sometimes|required|string|max:255',
                 'email' => 'sometimes|required|string|email|max:255|unique:users,email,' . $id,
                 'password' => 'sometimes|required|string|min:8|confirmed',
+                'image' => 'nullable|string|max:255',
                 'role' => 'sometimes|required|in:super-admin,admin,user',
             ]);
 
@@ -94,7 +97,7 @@ class UserController extends Controller
 
             $user = User::findOrFail($id);
 
-            $user->update($request->only('name', 'email', 'password'));
+            $user->update($request->only('name', 'email', 'password', 'image'));
 
             if ($request->has('role')) {
                 $user->syncRoles($request->role);
