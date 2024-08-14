@@ -13,7 +13,6 @@ class JwtMiddleware
     {
         try {
             $user = JWTAuth::parseToken()->authenticate();
-
             if (!$user) {
                 return response()->json(['error' => 'User not authenticated'], 401);
             }

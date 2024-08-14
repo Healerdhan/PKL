@@ -108,13 +108,13 @@ Route::put('/users/{id}', [UserController::class, 'update']);
 Route::delete('/users/{id}', [UserController::class, 'destroy']);
 
 
-Route::middleware('auth:api')->get('/profile', [ProfileController::class, 'show']);
+Route::middleware('jwt.auth')->get('/profile', [ProfileController::class, 'show']);
 
 
 Route::post('register', [AuthController::class, 'register']);
 Route::post('login', [AuthController::class, 'login']);
 
-Route::middleware(['jwt.verify'])->group(function () {
+Route::middleware(['jwt.auth'])->group(function () {
     Route::post('logout', [AuthController::class, 'logout']);
     Route::post('refresh', [AuthController::class, 'refresh']);
     Route::get('me', [AuthController::class, 'me']);

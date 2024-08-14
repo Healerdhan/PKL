@@ -163,6 +163,8 @@ return [
         Illuminate\View\ViewServiceProvider::class,
         App\Providers\GeocoderServiceProvider::class,
 
+        Tymon\JWTAuth\Providers\LaravelServiceProvider::class,
+
         /*
          * Package Service Providers...
          */

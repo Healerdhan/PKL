@@ -15,7 +15,7 @@ class ProfileController extends Controller
             $user = $request->user();
 
             $role = $user->roles->first()->name ?? null;
-            $permissions = $user->getDirectPermissions()->pluck('name');
+            $permissions = $user->getAllPermissions()->pluck('name');
 
 
             $response = [
