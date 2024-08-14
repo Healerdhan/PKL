@@ -30,10 +30,53 @@ class RolesAndPermissionsSeeder extends Seeder
 
         // Buat izin dasar yang bisa diberikan (opsional, sesuaikan dengan kebutuhan Anda)
         $permissions = [
-            'edit articles',
-            'delete articles',
-            'publish articles',
-            'unpublish articles',
+            'view categories',
+            'create category',
+            'update category',
+            'delete category',
+            'delete multiple categories',
+
+            // Siswa permissions
+            'view siswa',
+            'create siswa',
+            'update siswa',
+            'delete siswa',
+            'delete multiple siswa',
+
+            // Dudi permissions
+            'view dudi',
+            'create dudi',
+            'update dudi',
+            'delete dudi',
+            'delete multiple dudi',
+
+            // Pembimbing permissions
+            'view pembimbing',
+            'create pembimbing',
+            'update pembimbing',
+            'delete pembimbing',
+            'delete multiple pembimbing',
+
+            // Subject permissions
+            'view subjects',
+            'create subject',
+            'update subject',
+            'delete subject',
+            'delete multiple subjects',
+
+            // Nilai permissions
+            'view nilai',
+            'create nilai',
+            'update nilai',
+            'delete nilai',
+            'delete multiple nilai',
+
+            // Sertifikat permissions
+            'view sertifikat',
+            'create sertifikat',
+            'update sertifikat',
+            'delete sertifikat',
+            'delete multiple sertifikat',
         ];
 
         foreach ($permissions as $permission) {
@@ -43,21 +86,30 @@ class RolesAndPermissionsSeeder extends Seeder
         // Berikan semua izin ke Super Admin (opsional)
         $superAdminRole->syncPermissions(Permission::all());
 
-        // Berikan izin terbatas ke Admin (opsional, sesuaikan dengan kebutuhan Anda)
-        $adminRole->givePermissionTo(['edit articles', 'publish articles']);
+        // Berikan izin terbatas ke Admin
+        $adminPermissions = collect($permissions)->filter(function ($permission) {
+            return str_contains($permission, 'create') || str_contains($permission, 'delete') || str_contains($permission, 'view');
+        });
+        $adminRole->givePermissionTo($adminPermissions);
+
+        // Berikan izin hanya untuk melihat ke User
+        $userPermissions = collect($permissions)->filter(function ($permission) {
+            return str_contains($permission, 'view');
+        });
+        $userRole->givePermissionTo($userPermissions);
 
         // Assign role ke user tertentu
-        $superAdmin = User::find(1); // Misalnya user dengan ID 1 adalah Super Admin
+        $superAdmin = User::find(1);
         if ($superAdmin) {
             $superAdmin->assignRole($superAdminRole);
         }
 
-        $admin = User::find(2); // Misalnya user dengan ID 2 adalah Admin
+        $admin = User::find(2);
         if ($admin) {
             $admin->assignRole($adminRole);
         }
 
-        $user = User::find(3); // Misalnya user dengan ID 3 adalah User biasa
+        $user = User::find(3);
         if ($user) {
             $user->assignRole($userRole);
         }

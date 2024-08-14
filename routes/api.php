@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DudiController;
 use App\Http\Controllers\NilaiController;
 use App\Http\Controllers\PembimbingController;
@@ -106,6 +107,8 @@ Route::get('/users/{id}', [UserController::class, 'show']);
 Route::post('/users', [UserController::class, 'store']);
 Route::put('/users/{id}', [UserController::class, 'update']);
 Route::delete('/users/{id}', [UserController::class, 'destroy']);
+
+Route::get('/dashboard', [DashboardController::class, 'index']);
 
 
 Route::middleware('jwt.auth')->get('/profile', [ProfileController::class, 'show']);
