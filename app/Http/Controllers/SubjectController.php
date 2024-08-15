@@ -26,6 +26,10 @@ class SubjectController extends Controller
             $filters = $request->except(['limit', 'page']);
             $query = $this->filter($subject, $filters);
 
+            if ($request->has('nama')) {
+                $query->where('nama', 'like', '%' . $request->input('nama') . '%');
+            }
+
             $perPage = $request->input('limit', 10);
             $page = $request->input('page', 1);
 
@@ -37,15 +41,18 @@ class SubjectController extends Controller
             //     return $this->error(new Error(422, 'Data Not Found'), false);
             // }
 
-            $response = [
+            return response()->json([
+                'success' => true,
+                'code' => 200,
+                'message' => 'Berhasil mendapatkan data',
+                'error' => null,
                 'data' => $subjects->toArray(),
                 'per_page' => $perPage,
                 'total_data' => $totalData,
                 'total_pages' => $totalPages,
-                'current_page' => $page
-            ];
+                'current_page' => $page,
 
-            return $this->success(Code::SUCCESS, $response, Message::successGet);
+            ]);
         } catch (Error | \Exception $e) {
             return $this->error(new Error(Code::SERVER_ERROR, Message::internalServerError, $e->getMessage()), false);
         }

@@ -21,13 +21,19 @@ class NilaiController extends Controller
     public function index(Request $request)
     {
         try {
+            $perPage = $request->input('limit', 10);
+            $page = $request->input('page', 1);
+
             $query = Nilai::with(['siswa' => function ($query) {
                 $query->select('id', 'nama_siswa');
             }, 'subject' => function ($query) {
                 $query->select('id', 'nama', 'type');
             }]);
 
-            $nilai = $query->get()->map(function ($item) {
+            $totalData = $query->count();
+            $totalPages = (int) ceil($totalData / $perPage);
+
+            $nilai = $query->forPage($page, $perPage)->get()->map(function ($item) {
                 return [
                     'id' => $item->id,
                     'nilai' => $item->nilai,
@@ -39,21 +45,18 @@ class NilaiController extends Controller
                 ];
             });
 
-            $nilai = $this->filter($nilai, $request->all());
-            $totalData = $nilai->count();
-            $perPage = $totalData;
-            $totalPages = 1;
+            return response()->json([
+                'success' => true,
+                'code' => 200,
+                'message' => 'Berhasil mendapatkan data',
+                'error' => null,
+                'data' => $nilai->toArray(),
+                'per_page' => $perPage,
+                'total_data' => $totalData,
+                'total_pages' => $totalPages,
+                'current_page' => $page,
 
-            $response = [
-                'data' => $nilai,
-                'meta' => [
-                    'per_page' => $perPage,
-                    'total_data' => $totalData,
-                    'total_pages' => $totalPages,
-                ]
-            ];
-
-            return $this->success(Code::SUCCESS, $response, Message::successGet);
+            ]);
         } catch (Error | \Exception $e) {
             return $this->error(new Error(Code::SERVER_ERROR, Message::internalServerError, $e->getMessage()), false);
         }

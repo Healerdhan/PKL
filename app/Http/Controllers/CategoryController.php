@@ -22,16 +22,20 @@ class CategoryController extends Controller
         try {
             $query = Category::query();
 
-            $filters = $request->except(['limit', 'page']);
-            $query = $this->filter($query, $filters);
+            $search = $request->input('cari');
 
-            $categories = $query->get();
-            $totalData = $categories->count();
+            $filters = $request->except(['limit', 'page', 'cari']);
+            $query = $this->filter($query, $filters);
+            if ($search) {
+                $query->where('jurusan', 'like', '%' . $search . '%');
+            }
+
+            $totalData = $query->count();
             $perPage = 10;
             $totalPages = (int) ceil($totalData / $perPage);
 
             $page = $request->input('page', 1);
-            $paginatedData = $categories->slice(($page - 1) * $perPage, $perPage)->values();
+            $paginatedData = $query->forPage($page, $perPage)->get();
 
             return response()->json([
                 'success' => true,

@@ -24,14 +24,33 @@ class SiswaController extends Controller
       $siswas = Siswa::query();
       $siswas->with('category');
 
-      $siswas = $siswas->get();
-      $totalData = $siswas->count();
+      if ($request->has('search')) {
+        $searchTerm = $request->input('search');
+        $siswas->where(function ($query) use ($searchTerm) {
+          $query->where('nama_siswa', 'like', "%{$searchTerm}%")
+            ->orWhere('NISN', 'like', "%{$searchTerm}%");
+        });
+      }
+
       $perPage = 10;
-      $totalPages = (int) ceil($totalData / $perPage);
       $page = $request->input('page', 1);
+      $totalData = $siswas->count();
+      $totalPages = (int) ceil($totalData / $perPage);
+      $siswas = $siswas->forPage($page, $perPage)->get();
+
 
       if ($siswas->isEmpty()) {
-        throw new Error(422, 'Data Not Found');
+        return response()->json([
+          'success' => true,
+          'code' => 200,
+          'message' => 'berhasil mendapatkan data',
+          'error' => null,
+          'data' => [],
+          'per_page' => $perPage,
+          'total_data' => $totalData,
+          'total_pages' => $totalPages,
+          'current_page' => $page,
+        ]);
       }
 
       $latitude = $request->input('latitude');
@@ -59,17 +78,18 @@ class SiswaController extends Controller
         });
       }
 
-      $paginatedData = $siswas->forPage($page, $perPage)->values();
-
-      $response = [
-        'data' => $paginatedData,
+      return response()->json([
+        'success' => true,
+        'code' => 200,
+        'message' => 'Berhasil mendapatkan data',
+        'error' => null,
+        'data' => $siswas->toArray(),
         'per_page' => $perPage,
         'total_data' => $totalData,
         'total_pages' => $totalPages,
         'current_page' => $page,
-      ];
 
-      return $this->success(Code::SUCCESS, $response, Message::successGet);
+      ]);
     } catch (Error | \Exception $e) {
       return $this->error(new Error(Code::SERVER_ERROR, Message::internalServerError, $e->getMessage()), false);
     }

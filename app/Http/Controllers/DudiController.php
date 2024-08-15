@@ -24,15 +24,32 @@ class DudiController extends Controller
             $dudis = Dudi::query();
             $dudis->with(['siswa1', 'siswa2', 'siswa3', 'siswa4', 'siswa5', 'siswa6', 'siswa7', 'siswa8', 'siswa9', 'siswa10', 'siswa11', 'siswa12', 'siswa13', 'siswa14']);
 
-            $dudis = $dudis->get();
-            $totalData = $dudis->count();
-            $perPage = 10;
-            $totalPages = (int) ceil($totalData / $perPage);
-            $page = $request->input('page', 1);
-
-            if ($dudis->isEmpty()) {
-                throw new Error(422, 'Data Not Found');
+            if ($request->has('search')) {
+                $searchTerm = $request->input('search');
+                $dudis->where(function ($query) use ($searchTerm) {
+                    $query->where('tempat', 'like', "%{$searchTerm}%");
+                });
             }
+
+            $perPage = 10;
+            $page = $request->input('page', 1);
+            $totalData = $dudis->count();
+            $totalPages = (int) ceil($totalData / $perPage);
+            $dudis = $dudis->forPage($page, $perPage)->get();
+
+            // if ($dudis->isEmpty()) {
+            //     return response()->json([
+            //         'success' => false,
+            //         'code' => 422,
+            //         'message' => 'Data Not Found',
+            //         'error' => null,
+            //         'data' => [],
+            //         'per_page' => $perPage,
+            //         'total_data' => $totalData,
+            //         'total_pages' => $totalPages,
+            //         'current_page' => $page,
+            //     ], 422);
+            // }
 
             $latitude = $request->input('latitude');
             $longitude = $request->input('longitude');
@@ -68,17 +85,18 @@ class DudiController extends Controller
                 });
             }
 
-            $paginatedData = $dudis->forPage($page, $perPage)->values();
-
-            $response = [
-                'data' => $paginatedData,
+            return response()->json([
+                'success' => true,
+                'code' => 200,
+                'message' => 'Berhasil mendapatkan data',
+                'error' => null,
+                'data' => $dudis->toArray(),
                 'per_page' => $perPage,
                 'total_data' => $totalData,
                 'total_pages' => $totalPages,
                 'current_page' => $page,
-            ];
 
-            return $this->success(Code::SUCCESS, $response, Message::successGet);
+            ]);
         } catch (Error | \Exception $e) {
             return $this->error(new Error(Code::SERVER_ERROR, Message::internalServerError, $e->getMessage()), false);
         }

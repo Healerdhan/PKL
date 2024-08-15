@@ -30,21 +30,19 @@ class PembimbingController extends Controller
             }
 
             $totalData = $pembimbing->count();
-
             $perPage = $request->input('limit', 10);
             $page = $request->input('page', 1);
             $totalPages = (int) ceil($totalData / $perPage);
 
-            if ($totalData === 0 || $page > $totalPages) {
-                // Jika tidak ada data atau halaman lebih dari total halaman, kembalikan data kosong
-                return $this->success(Code::SUCCESS, [
-                    'data' => [],
-                    'per_page' => $perPage,
-                    'total_data' => $totalData,
-                    'total_pages' => $totalPages,
-                    'current_page' => $page,
-                ], Message::successGet);
-            }
+            // if ($totalData === 0 || $page > $totalPages) {
+            //     return $this->success(Code::SUCCESS, [
+            //         'data' => [],
+            //         'per_page' => $perPage,
+            //         'total_data' => $totalData,
+            //         'total_pages' => $totalPages,
+            //         'current_page' => $page,
+            //     ], Message::successGet);
+            // }
 
             $pembimbing = $pembimbingQuery->skip(($page - 1) * $perPage)->take($perPage)->get();
 
@@ -60,16 +58,18 @@ class PembimbingController extends Controller
                 ];
             });
 
-            $response = [
+            return response()->json([
+                'success' => true,
+                'code' => 200,
+                'message' => 'Berhasil mendapatkan data',
+                'error' => null,
                 'data' => $pembimbing->toArray(),
                 'per_page' => $perPage,
                 'total_data' => $totalData,
                 'total_pages' => $totalPages,
                 'current_page' => $page,
-            ];
 
-
-            return $this->success(Code::SUCCESS, $response, Message::successGet);
+            ]);
         } catch (Error | \Exception $e) {
             return $this->error(new Error(Code::SERVER_ERROR, Message::internalServerError, $e->getMessage()), false);
         }

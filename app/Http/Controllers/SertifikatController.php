@@ -21,8 +21,16 @@ class SertifikatController extends Controller
     {
         try {
             $query = Sertifikat::with(['siswa:id,nama_siswa', 'dudi:id,tempat', 'nilai:id,nilai']);
+            if ($request->has('kompetensi_keahlian')) {
+                $query->where('kompetensi_keahlian', 'like', '%' . $request->input('kompetensi_keahlian') . '%');
+            }
 
-            $sertifikat = $query->get()->map(function ($item) {
+            $totalData = $query->count();
+            $perPage = $request->input('limit', 10);
+            $page = $request->input('page', 1);
+            $totalPages = (int) ceil($totalData / $perPage);
+
+            $sertifikat = $query->skip(($page - 1) * $perPage)->take($perPage)->get()->map(function ($item) {
                 return [
                     'id' => $item->id,
                     'nama_siswa' => $item->siswa ? $item->siswa->nama_siswa : null,
@@ -37,21 +45,18 @@ class SertifikatController extends Controller
             });
 
 
-            $filteredData = $this->filter($sertifikat, $request->all());
-            $totalData = $filteredData->count();
-            $perPage = $totalData;
-            $totalPages = 1;
+            return response()->json([
+                'success' => true,
+                'code' => 200,
+                'message' => 'Berhasil mendapatkan data',
+                'error' => null,
+                'data' => $sertifikat->toArray(),
+                'per_page' => $perPage,
+                'total_data' => $totalData,
+                'total_pages' => $totalPages,
+                'current_page' => $page,
 
-            $response = [
-                'data' => $filteredData,
-                'meta' => [
-                    'per_page' => $perPage,
-                    'total_data' => $totalData,
-                    'total_pages' => $totalPages,
-                ]
-            ];
-
-            return $this->success(Code::SUCCESS, $response, Message::successGet);
+            ]);
         } catch (Error | \Exception $e) {
         }
     }
