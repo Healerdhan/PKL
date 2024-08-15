@@ -30,6 +30,8 @@ class RolesAndPermissionsSeeder extends Seeder
 
         // Buat izin dasar yang bisa diberikan (opsional, sesuaikan dengan kebutuhan Anda)
         $permissions = [
+            'view dashboard',
+
             'view categories',
             'create category',
             'update category',
