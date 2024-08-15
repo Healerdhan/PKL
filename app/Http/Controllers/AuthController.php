@@ -63,10 +63,10 @@ class AuthController extends Controller
                 return response()->json(['error' => 'Unauthorized'], 401);
             }
 
-            $user = Auth::user();
+            $user = app('auth')->user();
 
             $role = $user->roles->first()->name ?? null;
-            $permissions = $user->permissions->pluck('name');
+            $permissions = $user->getAllPermissions()->pluck('name');
 
             // Buat refresh token
             $refreshToken = $this->createRefreshToken($user);
