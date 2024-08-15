@@ -15,12 +15,6 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
-        User::create([
-            'name' => 'Super Admin',
-            'email' => 'admin@mail.com',
-            'password' => Hash::make('password'),
-        ])->assignRole('super-admin');
-
         $this->call([
             RolesAndPermissionsSeeder::class,
             CategorySeeder::class,
@@ -31,5 +25,11 @@ class DatabaseSeeder extends Seeder
             NilaiSeeder::class,
             SertifikatSeeder::class
         ]);
+
+        User::create([
+            'name' => 'Super Admin',
+            'email' => 'admin@mail.com',
+            'password' => Hash::make('password'),
+        ])->assignRole('super-admin');
     }
 }
