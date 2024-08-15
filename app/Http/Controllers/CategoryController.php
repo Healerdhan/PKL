@@ -34,18 +34,20 @@ class CategoryController extends Controller
             $page = $request->input('page', 1);
             $paginatedData = $categories->slice(($page - 1) * $perPage, $perPage)->values();
 
-            $response = [
+            return response()->json([
+                'success' => true,
+                'code' => 200,
+                'message' => 'Berhasil mendapatkan data',
+                'error' => null,
                 'data' => $paginatedData->toArray(),
-                'meta' => [
-                    'per_page' => $perPage,
-                    'total_data' => $totalData,
-                    'total_pages' => $totalPages,
-                    'current_page' => $page,
-                ]
-            ];
+                'per_page' => $perPage,
+                'total_data' => $totalData,
+                'total_pages' => $totalPages,
+                'current_page' => $page,
+            ]);
 
 
-            return $this->success(Code::SUCCESS, $response, Message::successGet);
+            // return $this->success(Code::SUCCESS, $response, Message::successGet);
         } catch (Error | \Exception $e) {
             return $this->error(new Error(Code::SERVER_ERROR, Message::internalServerError, $e->getMessage()), false);
         }
