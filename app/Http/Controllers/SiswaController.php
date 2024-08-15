@@ -1,3 +1,4 @@
+
 <?php
 
 namespace App\Http\Controllers;
@@ -64,7 +65,7 @@ class SiswaController extends Controller
         try {
             $validator = Validator::make($request->all(), [
                 'nama_siswa' => 'required|string',
-                'jenis_kelamin' => 'required|string',
+                'jenis_kelamin' => 'required|string|in:Laki-laki,Perempuan',
                 'NISN' => 'required|integer|unique:siswas,NISN',
                 'alamat' => 'required|string',
                 'tempat_lahir' => 'required|string',
@@ -131,7 +132,7 @@ class SiswaController extends Controller
         try {
             $validator = Validator::make($request->all(), [
                 'nama_siswa' => 'required|string',
-                'jenis_kelamin' => 'required|string',
+                'jenis_kelamin' => 'required|string|in:Laki-laki,Perempuan',
                 'NISN' => 'required|integer|unique:siswas,NISN,' . $id,
                 'tempat_lahir' => 'required|string',
                 'tanggal_lahir' => 'required|date',
