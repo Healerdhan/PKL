@@ -21,21 +21,32 @@ class PembimbingController extends Controller
     {
         try {
             $pembimbing = Pembimbing::with(['dudi1', 'dudi2', 'dudi3', 'dudi4', 'dudi5']);
-            $pembimbing = $this->filter($pembimbing, $request->all());
+
+            $filters = $request->except(['limit', 'page']);
+            $pembimbingQuery = $this->filter($pembimbing, $filters);
 
             if ($request->has('nama_pegawai')) {
-                $pembimbing->where('nama_pegawai', 'like', '%' . $request->nama_pegawai . '%');
+                $pembimbingQuery->where('nama_pegawai', 'like', '%' . $request->nama_pegawai . '%');
             }
 
-            $pembimbing = $pembimbing->get();
             $totalData = $pembimbing->count();
-            $perPage = $totalData;
-            $totalPages = 1;
 
+            $perPage = $request->input('limit', 10);
+            $page = $request->input('page', 1);
+            $totalPages = (int) ceil($totalData / $perPage);
 
-            if ($pembimbing->isEmpty()) {
-                throw new Error(422, 'Data Not Found');
+            if ($totalData === 0 || $page > $totalPages) {
+                // Jika tidak ada data atau halaman lebih dari total halaman, kembalikan data kosong
+                return $this->success(Code::SUCCESS, [
+                    'data' => [],
+                    'per_page' => $perPage,
+                    'total_data' => $totalData,
+                    'total_pages' => $totalPages,
+                    'current_page' => $page,
+                ], Message::successGet);
             }
+
+            $pembimbing = $pembimbingQuery->skip(($page - 1) * $perPage)->take($perPage)->get();
 
             $pembimbing->transform(function ($bimbing) {
                 return [
@@ -50,13 +61,13 @@ class PembimbingController extends Controller
             });
 
             $response = [
-                'data' => $pembimbing,
-                'meta' => [
-                    'per_page' => $perPage,
-                    'total_data' => $totalData,
-                    'total_pages' => $totalPages,
-                ]
+                'data' => $pembimbing->toArray(),
+                'per_page' => $perPage,
+                'total_data' => $totalData,
+                'total_pages' => $totalPages,
+                'current_page' => $page,
             ];
+
 
             return $this->success(Code::SUCCESS, $response, Message::successGet);
         } catch (Error | \Exception $e) {

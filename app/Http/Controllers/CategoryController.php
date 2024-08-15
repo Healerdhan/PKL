@@ -21,14 +21,13 @@ class CategoryController extends Controller
     {
         try {
             $query = Category::query();
+
             $filters = $request->except(['limit', 'page']);
             $query = $this->filter($query, $filters);
-
 
             $categories = $query->get();
             $totalData = $categories->count();
             $perPage = 10;
-
             $totalPages = (int) ceil($totalData / $perPage);
 
             $page = $request->input('page', 1);
@@ -45,9 +44,6 @@ class CategoryController extends Controller
                 'total_pages' => $totalPages,
                 'current_page' => $page,
             ]);
-
-
-            // return $this->success(Code::SUCCESS, $response, Message::successGet);
         } catch (Error | \Exception $e) {
             return $this->error(new Error(Code::SERVER_ERROR, Message::internalServerError, $e->getMessage()), false);
         }

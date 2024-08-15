@@ -23,31 +23,27 @@ class SubjectController extends Controller
     {
         try {
             $subject = Subject::query();
-            $subject = $this->filter($subject, $request->all());
+            $filters = $request->except(['limit', 'page']);
+            $query = $this->filter($subject, $filters);
 
-            $subjects = $subject->get();
-            if ($subjects->isEmpty()) {
-                return $this->error(new Error(422, 'Data Not Found'), false);
-            }
+            $perPage = $request->input('limit', 10);
+            $page = $request->input('page', 1);
 
-            $totalData = $subjects->count();
-            if ($totalData > 0) {
-                $message = "Data ditemukan";
-            } else {
-                $message = "Tidak ada data ditemukan";
-            }
 
-            $perPage = $totalData;
-            $totalPages = 1;
+            $totalData = $query->count();
+            $totalPages = (int) ceil($totalData / $perPage);
+            $subjects = $query->forPage($page, $perPage)->get();
+            // if ($subjects->isEmpty()) {
+            //     return $this->error(new Error(422, 'Data Not Found'), false);
+            // }
+
             $response = [
-                'data' => $subjects,
-                'meta' => [
-                    'per_page' => $perPage,
-                    'total_data' => $totalData,
-                    'total_pages' => $totalPages,
-                ]
+                'data' => $subjects->toArray(),
+                'per_page' => $perPage,
+                'total_data' => $totalData,
+                'total_pages' => $totalPages,
+                'current_page' => $page
             ];
-
 
             return $this->success(Code::SUCCESS, $response, Message::successGet);
         } catch (Error | \Exception $e) {

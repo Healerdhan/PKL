@@ -28,6 +28,7 @@ class SiswaController extends Controller
       $totalData = $siswas->count();
       $perPage = 10;
       $totalPages = (int) ceil($totalData / $perPage);
+      $page = $request->input('page', 1);
 
       if ($siswas->isEmpty()) {
         throw new Error(422, 'Data Not Found');
@@ -37,6 +38,9 @@ class SiswaController extends Controller
       $longitude = $request->input('longitude');
 
       if ($latitude && $longitude) {
+        $latitude = (float) $latitude;
+        $longitude = (float) $longitude;
+
         $siswas = $siswas->map(function ($siswa) use ($latitude, $longitude) {
           $distance = $siswa->calculateDistance($latitude, $longitude);
           return [
@@ -55,13 +59,14 @@ class SiswaController extends Controller
         });
       }
 
+      $paginatedData = $siswas->forPage($page, $perPage)->values();
+
       $response = [
-        'data' => $siswas,
-        'meta' => [
-          'per_page' => $perPage,
-          'total_data' => $totalData,
-          'total_pages' => $totalPages,
-        ]
+        'data' => $paginatedData,
+        'per_page' => $perPage,
+        'total_data' => $totalData,
+        'total_pages' => $totalPages,
+        'current_page' => $page,
       ];
 
       return $this->success(Code::SUCCESS, $response, Message::successGet);

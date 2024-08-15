@@ -21,22 +21,26 @@ class DudiController extends Controller
     public function index(Request $request)
     {
         try {
-            $dudis = dudi::query();
+            $dudis = Dudi::query();
+            $dudis->with(['siswa1', 'siswa2', 'siswa3', 'siswa4', 'siswa5', 'siswa6', 'siswa7', 'siswa8', 'siswa9', 'siswa10', 'siswa11', 'siswa12', 'siswa13', 'siswa14']);
+
             $dudis = $dudis->get();
-            $dudis->load(['siswa1', 'siswa2', 'siswa3', 'siswa4', 'siswa5', 'siswa6', 'siswa7', 'siswa8', 'siswa9', 'siswa10', 'siswa11', 'siswa12', 'siswa13', 'siswa14']);
+            $totalData = $dudis->count();
+            $perPage = 10;
+            $totalPages = (int) ceil($totalData / $perPage);
+            $page = $request->input('page', 1);
 
             if ($dudis->isEmpty()) {
                 throw new Error(422, 'Data Not Found');
             }
 
-            $totalData = $dudis->count();
-            $perPage = 10;
-            $totalPages = (int) ceil($totalData / $perPage);
-
             $latitude = $request->input('latitude');
             $longitude = $request->input('longitude');
 
             if ($latitude && $longitude) {
+                $latitude = (float) $latitude;
+                $longitude = (float) $longitude;
+
                 $dudis = $dudis->map(function ($dudi) use ($latitude, $longitude) {
                     $distance = $dudi->calculateDistance($latitude, $longitude);
                     return [
@@ -64,13 +68,14 @@ class DudiController extends Controller
                 });
             }
 
+            $paginatedData = $dudis->forPage($page, $perPage)->values();
+
             $response = [
-                'data' => $dudis,
-                'meta' => [
-                    'per_page' => $perPage,
-                    'total_data' => $totalData,
-                    'total_pages' => $totalPages,
-                ]
+                'data' => $paginatedData,
+                'per_page' => $perPage,
+                'total_data' => $totalData,
+                'total_pages' => $totalPages,
+                'current_page' => $page,
             ];
 
             return $this->success(Code::SUCCESS, $response, Message::successGet);
