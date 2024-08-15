@@ -21,7 +21,9 @@ class CategoryController extends Controller
     {
         try {
             $query = Category::query();
-            $query = $this->filter($query, $request->all());
+            $filters = $request->except(['limit', 'page']);
+            $query = $this->filter($query, $filters);
+
 
             $categories = $query->get();
             $totalData = $categories->count();
@@ -29,15 +31,19 @@ class CategoryController extends Controller
 
             $totalPages = (int) ceil($totalData / $perPage);
 
+            $page = $request->input('page', 1);
+            $paginatedData = $categories->slice(($page - 1) * $perPage, $perPage)->values();
 
             $response = [
-                'data' => $categories->toArray(),
+                'data' => $paginatedData->toArray(),
                 'meta' => [
                     'per_page' => $perPage,
                     'total_data' => $totalData,
                     'total_pages' => $totalPages,
+                    'current_page' => $page,
                 ]
             ];
+
 
             return $this->success(Code::SUCCESS, $response, Message::successGet);
         } catch (Error | \Exception $e) {
