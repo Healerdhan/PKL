@@ -22,30 +22,16 @@ class DudiController extends Controller
     {
         try {
             $dudis = dudi::query();
-            // $dudis = $this->filter($dudis, $request->all());
-
-            // if ($request->has('tempat')) {
-            //     $dudis->where('dudis.tempat', 'like', '%' . $request->tempat . '%');
-            // }
-
-            // $perPage = $this->getLimit();
-            // $page = $this->getPage();
-
-            // if ($perPage) {
-            //     $dudis = $dudis->paginate($perPage, ['*'], 'page', $page);
-            // } else {
-            //     $dudis = $dudis->get();
-            // }
-
             $dudis = $dudis->get();
-
             $dudis->load(['siswa1', 'siswa2', 'siswa3', 'siswa4', 'siswa5', 'siswa6', 'siswa7', 'siswa8', 'siswa9', 'siswa10', 'siswa11', 'siswa12', 'siswa13', 'siswa14']);
-
 
             if ($dudis->isEmpty()) {
                 throw new Error(422, 'Data Not Found');
             }
 
+            $totalData = $dudis->count();
+            $perPage = 10;
+            $totalPages = (int) ceil($totalData / $perPage);
 
             $latitude = $request->input('latitude');
             $longitude = $request->input('longitude');
@@ -78,7 +64,16 @@ class DudiController extends Controller
                 });
             }
 
-            return $this->success(Code::SUCCESS, $dudis, Message::successGet);
+            $response = [
+                'data' => $dudis,
+                'meta' => [
+                    'per_page' => $perPage,
+                    'total_data' => $totalData,
+                    'total_pages' => $totalPages,
+                ]
+            ];
+
+            return $this->success(Code::SUCCESS, $response, Message::successGet);
         } catch (Error | \Exception $e) {
             return $this->error(new Error(Code::SERVER_ERROR, Message::internalServerError, $e->getMessage()), false);
         }

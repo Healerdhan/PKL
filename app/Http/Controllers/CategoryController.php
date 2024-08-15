@@ -23,16 +23,23 @@ class CategoryController extends Controller
             $query = Category::query();
             $query = $this->filter($query, $request->all());
 
-            $perPage = $this->getLimit();
-            $page = $this->getPage();
-
-            if ($perPage) {
-                $categories = $query->paginate($perPage, ['*'], 'page', $page);
-                return $this->paginateResponse(Code::SUCCESS, $categories->toArray(), Message::successGet);
-            }
             $categories = $query->get();
+            $totalData = $categories->count();
+            $perPage = 10;
 
-            return $this->success(Code::SUCCESS, $categories, Message::successGet);
+            $totalPages = (int) ceil($totalData / $perPage);
+
+
+            $response = [
+                'data' => $categories->toArray(),
+                'meta' => [
+                    'per_page' => $perPage,
+                    'total_data' => $totalData,
+                    'total_pages' => $totalPages,
+                ]
+            ];
+
+            return $this->success(Code::SUCCESS, $response, Message::successGet);
         } catch (Error | \Exception $e) {
             return $this->error(new Error(Code::SERVER_ERROR, Message::internalServerError, $e->getMessage()), false);
         }

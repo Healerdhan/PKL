@@ -25,6 +25,10 @@ class SiswaController extends Controller
       $siswas->with('category');
 
       $siswas = $siswas->get();
+      $totalData = $siswas->count();
+      $perPage = 10;
+      $totalPages = (int) ceil($totalData / $perPage);
+
       if ($siswas->isEmpty()) {
         throw new Error(422, 'Data Not Found');
       }
@@ -51,7 +55,16 @@ class SiswaController extends Controller
         });
       }
 
-      return $this->success(Code::SUCCESS, $siswas, Message::successGet);
+      $response = [
+        'data' => $siswas,
+        'meta' => [
+          'per_page' => $perPage,
+          'total_data' => $totalData,
+          'total_pages' => $totalPages,
+        ]
+      ];
+
+      return $this->success(Code::SUCCESS, $response, Message::successGet);
     } catch (Error | \Exception $e) {
       return $this->error(new Error(Code::SERVER_ERROR, Message::internalServerError, $e->getMessage()), false);
     }

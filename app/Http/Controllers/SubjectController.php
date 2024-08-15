@@ -25,16 +25,31 @@ class SubjectController extends Controller
             $subject = Subject::query();
             $subject = $this->filter($subject, $request->all());
 
-            $perPage = $this->getLimit();
-            $page = $this->getPage();
-
-            if ($perPage) {
-                $sub = $subject->paginate($perPage, ['*'], 'page', $page);
-                return $this->paginateResponse(Code::SUCCESS, $sub->toArray(), Message::successGet);
+            $subjects = $subject->get();
+            if ($subjects->isEmpty()) {
+                return $this->error(new Error(422, 'Data Not Found'), false);
             }
-            $sub = $subject->get();
 
-            return $this->success(Code::SUCCESS, $sub, Message::successGet);
+            $totalData = $subjects->count();
+            if ($totalData > 0) {
+                $message = "Data ditemukan";
+            } else {
+                $message = "Tidak ada data ditemukan";
+            }
+
+            $perPage = $totalData;
+            $totalPages = 1;
+            $response = [
+                'data' => $subjects,
+                'meta' => [
+                    'per_page' => $perPage,
+                    'total_data' => $totalData,
+                    'total_pages' => $totalPages,
+                ]
+            ];
+
+
+            return $this->success(Code::SUCCESS, $response, Message::successGet);
         } catch (Error | \Exception $e) {
             return $this->error(new Error(Code::SERVER_ERROR, Message::internalServerError, $e->getMessage()), false);
         }

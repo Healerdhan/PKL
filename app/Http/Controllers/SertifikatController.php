@@ -36,17 +36,22 @@ class SertifikatController extends Controller
                 ];
             });
 
-            $ser = $this->filter($sertifikat, $request->all());
 
-            $perPage = $this->getLimit();
-            $page = $this->getPage();
+            $filteredData = $this->filter($sertifikat, $request->all());
+            $totalData = $filteredData->count();
+            $perPage = $totalData;
+            $totalPages = 1;
 
-            if ($perPage) {
-                $serti = $ser->forPage($page, $perPage);
-                return $this->paginateResponse(Code::SUCCESS, $serti, Message::successGet);
-            }
+            $response = [
+                'data' => $filteredData,
+                'meta' => [
+                    'per_page' => $perPage,
+                    'total_data' => $totalData,
+                    'total_pages' => $totalPages,
+                ]
+            ];
 
-            return $this->success(Code::SUCCESS, $ser, Message::successGet);
+            return $this->success(Code::SUCCESS, $response, Message::successGet);
         } catch (Error | \Exception $e) {
         }
     }

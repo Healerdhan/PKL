@@ -40,16 +40,20 @@ class NilaiController extends Controller
             });
 
             $nilai = $this->filter($nilai, $request->all());
+            $totalData = $nilai->count();
+            $perPage = $totalData;
+            $totalPages = 1;
 
-            $perPage = $this->getLimit();
-            $page = $this->getPage();
+            $response = [
+                'data' => $nilai,
+                'meta' => [
+                    'per_page' => $perPage,
+                    'total_data' => $totalData,
+                    'total_pages' => $totalPages,
+                ]
+            ];
 
-            if ($perPage) {
-                $nil = $nilai->forPage($page, $perPage);
-                return $this->paginateResponse(Code::SUCCESS, $nil, Message::successGet);
-            }
-
-            return $this->success(Code::SUCCESS, $nilai, Message::successGet);
+            return $this->success(Code::SUCCESS, $response, Message::successGet);
         } catch (Error | \Exception $e) {
             return $this->error(new Error(Code::SERVER_ERROR, Message::internalServerError, $e->getMessage()), false);
         }

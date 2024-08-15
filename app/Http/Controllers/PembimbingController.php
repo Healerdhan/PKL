@@ -27,14 +27,11 @@ class PembimbingController extends Controller
                 $pembimbing->where('nama_pegawai', 'like', '%' . $request->nama_pegawai . '%');
             }
 
-            $perPage = $this->getLimit();
-            $page = $this->getPage();
+            $pembimbing = $pembimbing->get();
+            $totalData = $pembimbing->count();
+            $perPage = $totalData;
+            $totalPages = 1;
 
-            if ($perPage) {
-                $pembimbing = $pembimbing->paginate($perPage, ['*'], 'page', $page);
-            } else {
-                $pembimbing = $pembimbing->get();
-            }
 
             if ($pembimbing->isEmpty()) {
                 throw new Error(422, 'Data Not Found');
@@ -52,7 +49,16 @@ class PembimbingController extends Controller
                 ];
             });
 
-            return $this->success(Code::SUCCESS, $pembimbing, Message::successGet);
+            $response = [
+                'data' => $pembimbing,
+                'meta' => [
+                    'per_page' => $perPage,
+                    'total_data' => $totalData,
+                    'total_pages' => $totalPages,
+                ]
+            ];
+
+            return $this->success(Code::SUCCESS, $response, Message::successGet);
         } catch (Error | \Exception $e) {
             return $this->error(new Error(Code::SERVER_ERROR, Message::internalServerError, $e->getMessage()), false);
         }
