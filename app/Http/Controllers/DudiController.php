@@ -21,14 +21,11 @@ class DudiController extends Controller
     public function index(Request $request)
     {
         try {
-            $dudis = Dudi::query();
-            $dudis->with(['siswa1', 'siswa2', 'siswa3', 'siswa4', 'siswa5', 'siswa6', 'siswa7', 'siswa8', 'siswa9', 'siswa10', 'siswa11', 'siswa12', 'siswa13', 'siswa14']);
+            $dudis = Dudi::query()->with('siswas');
 
             if ($request->has('search')) {
                 $searchTerm = $request->input('search');
-                $dudis->where(function ($query) use ($searchTerm) {
-                    $query->where('tempat', 'like', "%{$searchTerm}%");
-                });
+                $dudis->where('tempat', 'like', "%{$searchTerm}%");
             }
 
             $perPage = 10;
@@ -36,20 +33,6 @@ class DudiController extends Controller
             $totalData = $dudis->count();
             $totalPages = (int) ceil($totalData / $perPage);
             $dudis = $dudis->forPage($page, $perPage)->get();
-
-            // if ($dudis->isEmpty()) {
-            //     return response()->json([
-            //         'success' => false,
-            //         'code' => 422,
-            //         'message' => 'Data Not Found',
-            //         'error' => null,
-            //         'data' => [],
-            //         'per_page' => $perPage,
-            //         'total_data' => $totalData,
-            //         'total_pages' => $totalPages,
-            //         'current_page' => $page,
-            //     ], 422);
-            // }
 
             $latitude = $request->input('latitude');
             $longitude = $request->input('longitude');
@@ -67,20 +50,12 @@ class DudiController extends Controller
                         'latitude' => $dudi->latitude,
                         'longitude' => $dudi->longitude,
                         'distance' => $distance,
-                        'siswa1' => optional($dudi->siswa1)->nama_siswa,
-                        'siswa2' => optional($dudi->siswa2)->nama_siswa,
-                        'siswa3' => optional($dudi->siswa3)->nama_siswa,
-                        'siswa4' => optional($dudi->siswa4)->nama_siswa,
-                        'siswa5' => optional($dudi->siswa5)->nama_siswa,
-                        'siswa6' => optional($dudi->siswa6)->nama_siswa,
-                        'siswa7' => optional($dudi->siswa7)->nama_siswa,
-                        'siswa8' => optional($dudi->siswa8)->nama_siswa,
-                        'siswa9' => optional($dudi->siswa9)->nama_siswa,
-                        'siswa10' => optional($dudi->siswa10)->nama_siswa,
-                        'siswa11' => optional($dudi->siswa11)->nama_siswa,
-                        'siswa12' => optional($dudi->siswa12)->nama_siswa,
-                        'siswa13' => optional($dudi->siswa13)->nama_siswa,
-                        'siswa14' => optional($dudi->siswa14)->nama_siswa,
+                        'siswa' => $dudi->siswas->map(function ($siswa) {
+                            return [
+                                'id' => $siswa->id,
+                                'nama_siswa' => $siswa->nama_siswa,
+                            ];
+                        }),
                     ];
                 });
             }
@@ -112,28 +87,21 @@ class DudiController extends Controller
                 'jumlah' => 'required|integer|min:1|max:14',
                 'latitude' => 'required|numeric',
                 'longitude' => 'required|numeric',
-                'siswa_id1' => 'nullable|uuid|exists:siswas,id',
-                'siswa_id2' => 'nullable|uuid|exists:siswas,id',
-                'siswa_id3' => 'nullable|uuid|exists:siswas,id',
-                'siswa_id4' => 'nullable|uuid|exists:siswas,id',
-                'siswa_id5' => 'nullable|uuid|exists:siswas,id',
-                'siswa_id6' => 'nullable|uuid|exists:siswas,id',
-                'siswa_id7' => 'nullable|uuid|exists:siswas,id',
-                'siswa_id8' => 'nullable|uuid|exists:siswas,id',
-                'siswa_id9' => 'nullable|uuid|exists:siswas,id',
-                'siswa_id10' => 'nullable|uuid|exists:siswas,id',
-                'siswa_id11' => 'nullable|uuid|exists:siswas,id',
-                'siswa_id12' => 'nullable|uuid|exists:siswas,id',
-                'siswa_id13' => 'nullable|uuid|exists:siswas,id',
-                'siswa_id14' => 'nullable|uuid|exists:siswas,id',
+                'siswa_ids' => 'nullable|array',
+                'siswa_ids.*' => 'uuid|exists:siswas,id',
             ]);
             if ($validator->fails()) {
                 return response()->json(['errors' => $validator->errors()], 422);
             }
 
-            $dudi = Dudi::create($request->all());
-            if (!$dudi) {
-                throw new Error(422, 'Data Not Found');
+            $dudi = Dudi::create([
+                'tempat' => $request->input('tempat'),
+                'jumlah' => $request->input('jumlah'),
+                'latitude' => $request->input('latitude'),
+                'longitude' => $request->input('longitude'),
+            ]);
+            if ($request->has('siswa_ids') && is_array($request->siswa_ids)) {
+                $dudi->siswas()->sync($request->siswa_ids);
             }
 
             DB::commit();
@@ -148,7 +116,7 @@ class DudiController extends Controller
     public function show($id, Request $request)
     {
         try {
-            $dudi = dudi::with(['siswa1', 'siswa2', 'siswa3', 'siswa4', 'siswa5', 'siswa6', 'siswa7', 'siswa8', 'siswa9', 'siswa10', 'siswa11', 'siswa12', 'siswa13', 'siswa14'])->findOrFail($id);
+            $dudi = Dudi::with('siswas')->find($id);
 
             if (!$dudi) {
                 throw new Error(404, 'Dudi not found');
@@ -157,34 +125,24 @@ class DudiController extends Controller
             $latitude = $request->input('latitude');
             $longitude = $request->input('longitude');
 
-            if ($latitude && $longitude) {
-                $distance = $dudi->calculateDistance($latitude, $longitude);
-            } else {
-                $distance = null;
-            }
+            $distance = ($latitude && $longitude)
+                ? $dudi->calculateDistance($latitude, $longitude)
+                : null;
 
-            $result = [
+            $siswaData = $dudi->siswas->map(function ($siswa, $index) {
+                return [
+                    'siswa' . ($index + 1) => $siswa->nama_siswa
+                ];
+            })->collapse()->all();
+
+            $result = array_merge([
                 'id' => $dudi->id,
                 'tempat' => $dudi->tempat,
                 'jumlah' => $dudi->jumlah,
                 'latitude' => $dudi->latitude,
                 'longitude' => $dudi->longitude,
                 'distance' => $distance,
-                'siswa1' => optional($dudi->siswa1)->nama_siswa,
-                'siswa2' => optional($dudi->siswa2)->nama_siswa,
-                'siswa3' => optional($dudi->siswa3)->nama_siswa,
-                'siswa4' => optional($dudi->siswa4)->nama_siswa,
-                'siswa5' => optional($dudi->siswa5)->nama_siswa,
-                'siswa6' => optional($dudi->siswa6)->nama_siswa,
-                'siswa7' => optional($dudi->siswa7)->nama_siswa,
-                'siswa8' => optional($dudi->siswa8)->nama_siswa,
-                'siswa9' => optional($dudi->siswa9)->nama_siswa,
-                'siswa10' => optional($dudi->siswa10)->nama_siswa,
-                'siswa11' => optional($dudi->siswa11)->nama_siswa,
-                'siswa12' => optional($dudi->siswa12)->nama_siswa,
-                'siswa13' => optional($dudi->siswa13)->nama_siswa,
-                'siswa14' => optional($dudi->siswa14)->nama_siswa,
-            ];
+            ], $siswaData);
 
             return $this->success(Code::SUCCESS, $result, Message::successGet);
         } catch (Error | \Exception $e) {
@@ -202,20 +160,8 @@ class DudiController extends Controller
                 'jumlah' => 'sometimes|required|integer|min:1|max:14',
                 'latitude' => 'sometimes|numeric',
                 'longitude' => 'sometimes|numeric',
-                'siswa_id1' => 'nullable|uuid|exists:siswas,id',
-                'siswa_id2' => 'nullable|uuid|exists:siswas,id',
-                'siswa_id3' => 'nullable|uuid|exists:siswas,id',
-                'siswa_id4' => 'nullable|uuid|exists:siswas,id',
-                'siswa_id5' => 'nullable|uuid|exists:siswas,id',
-                'siswa_id6' => 'nullable|uuid|exists:siswas,id',
-                'siswa_id7' => 'nullable|uuid|exists:siswas,id',
-                'siswa_id8' => 'nullable|uuid|exists:siswas,id',
-                'siswa_id9' => 'nullable|uuid|exists:siswas,id',
-                'siswa_id10' => 'nullable|uuid|exists:siswas,id',
-                'siswa_id11' => 'nullable|uuid|exists:siswas,id',
-                'siswa_id12' => 'nullable|uuid|exists:siswas,id',
-                'siswa_id13' => 'nullable|uuid|exists:siswas,id',
-                'siswa_id14' => 'nullable|uuid|exists:siswas,id',
+                'siswa_ids' => 'nullable|array',
+                'siswa_ids.*' => 'uuid|exists:siswas,id',
             ]);
             if ($validator->fails()) {
                 return response()->json(['errors' => $validator->errors()], 422);
@@ -225,9 +171,20 @@ class DudiController extends Controller
             if (!$dudi) {
                 throw new Error($dudi['code'], $dudi['message'], $dudi['error']);
             }
-            $dudi->update($request->all());
+
+            $dudi->update($request->only([
+                'tempat',
+                'jumlah',
+                'latitude',
+                'longitude'
+            ]));
+
+            if ($request->has('siswa_ids')) {
+                $dudi->siswas()->sync($request->input('siswa_ids'));
+            }
+
             DB::commit();
-            return $this->success(Code::SUCCESS, $dudi, Message::successUpdate);
+            return $this->success(Code::SUCCESS, $dudi->load('siswas'), Message::successUpdate);
         } catch (Error | \Exception $e) {
             DB::rollBack();
             return $this->error(new Error(Code::SERVER_ERROR, Message::errorUpdate, $e->getMessage()), false);
@@ -240,9 +197,7 @@ class DudiController extends Controller
         DB::beginTransaction();
         try {
             $dudi = Dudi::findOrFail($id);
-            if (!$dudi) {
-                throw new Error($dudi['code'], $dudi['message'], $dudi['error']);
-            }
+            $dudi->siswas()->detach();
 
             $dudi->delete();
             DB::commit();
@@ -266,6 +221,10 @@ class DudiController extends Controller
             if ($validator->fails()) {
                 return $this->error(new Error(Code::VALIDATION_ERROR, Message::errorDelete, $validator->errors()->first()), false);
             }
+
+            Dudi::whereIn('id', $request->ids)->each(function ($dudi) {
+                $dudi->siswas()->detach();
+            });
 
             dudi::whereIn('id', $request->ids)->delete();
             DB::commit();

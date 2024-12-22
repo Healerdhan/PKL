@@ -43,9 +43,15 @@ class Siswa extends Model
         return $this->belongsTo(Category::class);
     }
 
-    public function dudi()
+    // public function dudi()
+    // {
+    //     return $this->belongsTo(Dudi::class);
+    // }
+
+    public function dudis()
     {
-        return $this->belongsTo(Dudi::class);
+        return $this->belongsToMany(Dudi::class, 'dudi_siswa', 'siswa_id', 'dudi_id')
+            ->withTimestamps();
     }
 
     public function calculateDistance($latitude, $longitude)

@@ -110,6 +110,9 @@ class SiswaController extends Controller
         'latitude' => 'nullable|numeric',
         'longitude' => 'nullable|numeric',
         'category_id' => 'required|exists:categories,id',
+        'additional_fields' => 'sometimes|array',
+        'additional_fields.*.key' => 'required_with:additional_fields|string',
+        'additional_fields.*.value' => 'required_with:additional_fields|string',
       ]);
 
       if ($validator->fails()) {
@@ -117,17 +120,18 @@ class SiswaController extends Controller
         // return $this->error(new Error(Code::VALIDATION_ERROR, Message::errorCreate, $validator->errors()->first()), false);
       }
 
-      $siswa = Siswa::create([
-        'nama_siswa' => $request->nama_siswa,
-        'jenis_kelamin' => $request->jenis_kelamin,
-        'NISN' => $request->NISN,
-        'tempat_lahir' => $request->tempat_lahir,
-        'tanggal_lahir' => $request->tanggal_lahir,
-        'alamat' => $request->alamat,
-        'latitude' => $request->latitude,
-        'longitude' => $request->longitude,
-        'category_id' => $request->category_id,
+      $siswaData = $request->only([
+        'nama_siswa',
+        'jenis_kelamin',
+        'NISN',
+        'tempat_lahir',
+        'tanggal_lahir',
+        'alamat',
+        'latitude',
+        'longitude',
+        'category_id'
       ]);
+      $siswa = Siswa::create($siswaData);
       if (!$siswa) {
         throw new Error(422, 'Data Not Found');
       }
