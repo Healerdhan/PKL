@@ -20,41 +20,30 @@ class PembimbingController extends Controller
     public function index(Request $request)
     {
         try {
-            $pembimbing = Pembimbing::with(['dudi1', 'dudi2', 'dudi3', 'dudi4', 'dudi5']);
+            $pembimbing = Pembimbing::with('dudis');
 
-            $filters = $request->except(['limit', 'page']);
-            $pembimbingQuery = $this->filter($pembimbing, $filters);
-
-            if ($request->has('nama_pegawai')) {
-                $pembimbingQuery->where('nama_pegawai', 'like', '%' . $request->nama_pegawai . '%');
+            if ($request->has('search')) {
+                $searchTerm = $request->input('search');
+                $pembimbing->where('nama_pegawai', 'like', "%{$searchTerm}%");
             }
 
-            $totalData = $pembimbing->count();
-            $perPage = $request->input('limit', 10);
+            $perPage = 10;
             $page = $request->input('page', 1);
+            $totalData = $pembimbing->count();
             $totalPages = (int) ceil($totalData / $perPage);
 
-            // if ($totalData === 0 || $page > $totalPages) {
-            //     return $this->success(Code::SUCCESS, [
-            //         'data' => [],
-            //         'per_page' => $perPage,
-            //         'total_data' => $totalData,
-            //         'total_pages' => $totalPages,
-            //         'current_page' => $page,
-            //     ], Message::successGet);
-            // }
+            $pembimbings = $pembimbing->forPage($page, $perPage)->get();
 
-            $pembimbing = $pembimbingQuery->skip(($page - 1) * $perPage)->take($perPage)->get();
-
-            $pembimbing->transform(function ($bimbing) {
+            $pembimbings = $pembimbings->map(function ($pembimbing) {
                 return [
-                    'id' => $bimbing->id,
-                    'nama_pegawai' => $bimbing->nama_pegawai,
-                    'dudi1' => optional($bimbing->dudi1)->tempat,
-                    'dudi2' => optional($bimbing->dudi2)->tempat,
-                    'dudi3' => optional($bimbing->dudi3)->tempat,
-                    'dudi4' => optional($bimbing->dudi4)->tempat,
-                    'dudi5' => optional($bimbing->dudi5)->tempat,
+                    'id' => $pembimbing->id,
+                    'nama_pegawai' => $pembimbing->nama_pegawai,
+                    'dudis' => $pembimbing->dudis->map(function ($dudi) {
+                        return [
+                            'id' => $dudi->id,
+                            'tempat' => $dudi->tempat,
+                        ];
+                    }),
                 ];
             });
 
@@ -63,7 +52,7 @@ class PembimbingController extends Controller
                 'code' => 200,
                 'message' => 'Berhasil mendapatkan data',
                 'error' => null,
-                'data' => $pembimbing->toArray(),
+                'data' => $pembimbings->toArray(),
                 'per_page' => $perPage,
                 'total_data' => $totalData,
                 'total_pages' => $totalPages,
@@ -82,19 +71,19 @@ class PembimbingController extends Controller
         try {
             $validated = Validator::make($request->all(), [
                 'nama_pegawai' => 'required|string|max:255',
-                'dudi_id1' => 'nullable|uuid|exists:dudis,id',
-                'dudi_id2' => 'nullable|uuid|exists:dudis,id',
-                'dudi_id3' => 'nullable|uuid|exists:dudis,id',
-                'dudi_id4' => 'nullable|uuid|exists:dudis,id',
-                'dudi_id5' => 'nullable|uuid|exists:dudis,id',
+                'dudis_ids' => 'nullable|array',
+                'dudis_ids.*' => 'uuid|exists:dudis,id',
             ]);
             if ($validated->fails()) {
                 return response()->json(['errors' => $validated->errors()], 422);
             }
 
-            $pembimbing = Pembimbing::create($request->all());
-            if (!$pembimbing) {
-                throw new Error(422, 'Data Not Found');
+            $pembimbing = Pembimbing::create([
+                'nama_pegawai' => $request->input('nama_pegawai')
+            ]);
+
+            if ($request->has('dudis_ids') && is_array($request->dudis_ids)) {
+                $pembimbing->dudis()->sync($request->dudis_ids);
             }
 
             DB::commit();
@@ -109,28 +98,24 @@ class PembimbingController extends Controller
     public function show($id)
     {
         try {
-            $bimbings = Pembimbing::with(
-                'dudi1',
-                'dudi2',
-                'dudi3',
-                'dudi4',
-                'dudi5',
-            )->findOrFail($id);
+            $bimbings = Pembimbing::with('dudis')->findOrFail($id);
             if (!$bimbings) {
                 throw new Error(422, 'Data Not Found');
-                // throw new Error($siswa['code'], $siswa['message'], $siswa['error']);
             }
 
-            $transform = [
+            $dudiData = $bimbings->dudis->map(function ($dudi, $index) {
+                return [
+                    'dudi' . ($index + 1) => $dudi->tempat
+                ];
+            })->collapse()->all();
+
+            $result = array_merge([
                 'id' => $bimbings->id,
                 'nama_pegawai' => $bimbings->nama_pegawai,
-                'dudi1' => optional($bimbings->dudi1)->tempat,
-                'dudi2' => optional($bimbings->dudi2)->tempat,
-                'dudi3' => optional($bimbings->dudi3)->tempat,
-                'dudi4' => optional($bimbings->dudi4)->tempat,
-                'dudi5' => optional($bimbings->dudi5)->tempat,
-            ];
-            return $this->success(Code::SUCCESS, $transform, Message::successGet);
+            ], $dudiData);
+
+
+            return $this->success(Code::SUCCESS, $result, Message::successGet);
         } catch (Error | \Exception $e) {
             return $this->error(new Error(Code::NOT_FOUND, Message::notFound, $e->getMessage()), false);
         }
@@ -143,24 +128,28 @@ class PembimbingController extends Controller
         try {
             $validated = Validator::make($request->all(), [
                 'nama_pegawai' => 'required|string|max:255',
-                'dudi_id1' => 'nullable|uuid|exists:dudis,id',
-                'dudi_id2' => 'nullable|uuid|exists:dudis,id',
-                'dudi_id3' => 'nullable|uuid|exists:dudis,id',
-                'dudi_id4' => 'nullable|uuid|exists:dudis,id',
-                'dudi_id5' => 'nullable|uuid|exists:dudis,id',
+                'dudis_ids' => 'nullable|array',
+                'dudis_ids.*' => 'uuid|exists:dudis,id',
             ]);
             if ($validated->fails()) {
                 return response()->json(['errors' => $validated->errors()], 422);
             }
 
             $bimbing = Pembimbing::findOrFail($id);
-            $bimbing->update($request->all());
             if (!$bimbing) {
                 throw new Error($bimbing['code'], $bimbing['message'], $bimbing['error']);
             }
 
+            $bimbing->update($request->only([
+                'nama_pegawai',
+            ]));
+
+            if ($request->has('dudis_ids')) {
+                $bimbing->dudis()->sync($request->input('dudis_ids'));
+            }
+
             DB::commit();
-            return $this->success(Code::SUCCESS, $bimbing, Message::successUpdate);
+            return $this->success(Code::SUCCESS, $bimbing->load('dudis'), Message::successUpdate);
         } catch (Error | \Exception $e) {
             DB::rollBack();
             return $this->error(new Error(Code::SERVER_ERROR, Message::errorUpdate, $e->getMessage()), false);
@@ -173,6 +162,7 @@ class PembimbingController extends Controller
         DB::beginTransaction();
         try {
             $bing = Pembimbing::findOrFail($id);
+            $bing->dudis()->detach();
             $bing->delete();
             if (!$bing) {
                 throw new Error($bing['code'], $bing['message'], $bing['error']);
@@ -198,6 +188,10 @@ class PembimbingController extends Controller
             if ($validator->fails()) {
                 return $this->error(new Error(Code::VALIDATION_ERROR, Message::errorDelete, $validator->errors()->first()), false);
             }
+
+            Pembimbing::whereIn('id', $request->ids)->each(function ($pembimbing) {
+                $pembimbing->dudis()->detach();
+            });
 
             Pembimbing::whereIn('id', $request->ids)->delete();
 

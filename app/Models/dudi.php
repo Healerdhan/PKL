@@ -32,6 +32,11 @@ class dudi extends Model
             ->withTimestamps();
     }
 
+    public function pembimbings()
+    {
+        return $this->belongsToMany(Pembimbing::class, 'dudi_pembimbing', 'dudi_id', 'pembimbing_id');
+    }
+
     public function calculateDistance($latitude, $longitude)
     {
         $earthRadius = 6371; // Radius bumi dalam KM

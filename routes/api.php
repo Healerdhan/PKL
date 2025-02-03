@@ -101,6 +101,8 @@ Route::middleware(['jwt.auth'])->group(function () {
         Route::put('/{id}', [SertifikatController::class, 'update'])->name('update');
         Route::delete('/{id}', [SertifikatController::class, 'destroy'])->name('destroy');
         Route::post('/delete-multiple', [SertifikatController::class, 'destroyMultiple'])->name('destroyMultiple');
+        Route::get('/export-pdf', [SertifikatController::class, 'exportToPDF']);
+        Route::get('/export-excel', [SertifikatController::class, 'exportExcel']);
     });
 
     // Route::name('user.')->prefix('user')->group(function () {

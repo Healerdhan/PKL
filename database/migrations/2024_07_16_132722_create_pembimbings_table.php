@@ -14,20 +14,9 @@ class CreatePembimbingsTable extends Migration
     public function up()
     {
         Schema::create('pembimbings', function (Blueprint $table) {
-            $table->uuid('id');
+            $table->uuid('id')->primary();
             $table->string('nama_pegawai');
-            $table->uuid('dudi_id1')->nullable();
-            $table->uuid('dudi_id2')->nullable();
-            $table->uuid('dudi_id3')->nullable();
-            $table->uuid('dudi_id4')->nullable();
-            $table->uuid('dudi_id5')->nullable();
             $table->timestamps();
-
-            $table->foreign('dudi_id1')->references('id')->on('dudis')->onDelete('set null');
-            $table->foreign('dudi_id2')->references('id')->on('dudis')->onDelete('set null');
-            $table->foreign('dudi_id3')->references('id')->on('dudis')->onDelete('set null');
-            $table->foreign('dudi_id4')->references('id')->on('dudis')->onDelete('set null');
-            $table->foreign('dudi_id5')->references('id')->on('dudis')->onDelete('set null');
         });
     }
 

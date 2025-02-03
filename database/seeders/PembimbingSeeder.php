@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\dudi;
 use App\Models\Pembimbing;
 use GuzzleHttp\Promise\Create;
 use Illuminate\Database\Seeder;
@@ -15,6 +16,9 @@ class PembimbingSeeder extends Seeder
      */
     public function run()
     {
-        Pembimbing::factory()->count(15)->create();
+        Pembimbing::factory()->count(15)->create()->each(function ($pembimbing) {
+            $dudis = dudi::factory(3)->create();
+            $pembimbing->dudis()->attach($dudis->pluck('id')->toArray());
+        });
     }
 }

@@ -27,28 +27,8 @@ class Pembimbing extends Model
         });
     }
 
-    public function dudi1()
+    public function dudis()
     {
-        return $this->belongsTo(dudi::class, 'dudi_id1');
-    }
-
-    public function dudi2()
-    {
-        return $this->belongsTo(dudi::class, 'dudi_id2');
-    }
-
-    public function dudi3()
-    {
-        return $this->belongsTo(dudi::class, 'dudi_id3');
-    }
-
-    public function dudi4()
-    {
-        return $this->belongsTo(dudi::class, 'dudi_id4');
-    }
-
-    public function dudi5()
-    {
-        return $this->belongsTo(dudi::class, 'dudi_id5');
+        return $this->belongsToMany(Dudi::class, 'pembimbing_dudi', 'pembimbing_id', 'dudi_id');
     }
 }

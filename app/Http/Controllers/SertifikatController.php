@@ -9,9 +9,11 @@ use App\Models\Sertifikat;
 use App\Traits\PaginationResponse;
 use App\Traits\RequestFilter;
 use App\Traits\ResponseFormatter;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Maatwebsite\Excel\Facades\Excel;
 
 class SertifikatController extends Controller
 {
@@ -198,6 +200,67 @@ class SertifikatController extends Controller
         } catch (Error | \Exception $e) {
             DB::rollBack();
             return $this->error(new Error(Code::SERVER_ERROR, Message::errorDelete, $e));
+        }
+    }
+
+
+    public function exportToPDF()
+    {
+        try {
+            $sertifikats = Sertifikat::with(['siswa:id,nama_siswa', 'dudi:id,tempat', 'nilai:id,nilai'])->get();
+
+            if (!$sertifikats) {
+                throw new Error($sertifikats['code'], $sertifikats['message'], $sertifikats['error']);
+            }
+
+            $pdf = Pdf::loadView('sertifikats.export_pdf', ['sertifikats' => $sertifikats]);
+            $filename = 'sertifikats_' . now()->format('Ymd_His') . '.pdf';
+
+            return $pdf->download($filename);
+        } catch (\Exception $e) {
+            return $this->error(new Error(Code::SERVER_ERROR, Message::error, $e->getMessage()), false);
+        }
+    }
+
+
+    public function exportExcel()
+    {
+        try {
+            // Ambil data sertifikat beserta relasinya
+            $sertifikats = Sertifikat::with(['siswa', 'dudi', 'nilai'])->get();
+
+            if ($sertifikats->isEmpty()) {
+                return response()->json(['message' => 'Tidak ada data untuk diekspor'], 404);
+            }
+
+            // Mapping data untuk Excel
+            $data = $sertifikats->map(function ($sertifikat) {
+                return [
+                    'siswa_id' => $sertifikat->siswa->nama_siswa,
+                    'dudi_id' => $sertifikat->dudi->tempat,
+                    'kompetensi_keahlian' => $sertifikat->kompetensi_keahlian,
+                    'alamat_tempat_pkl' => $sertifikat->alamat_tempat_pkl,
+                    'tanggal_mulai' => $sertifikat->tanggal_mulai,
+                    'tanggal_selesai' => $sertifikat->tanggal_selesai,
+                    'nilai_id' => $sertifikat->nilai->nilai,
+                    'Predikat' => $sertifikat->predikat
+                ];
+            })->toArray();
+
+            // Ekspor langsung dari array
+            return Excel::download(new class($data) implements \Maatwebsite\Excel\Concerns\FromArray {
+                private $data;
+                public function __construct($data)
+                {
+                    $this->data = $data;
+                }
+                public function array(): array
+                {
+                    return $this->data;
+                }
+            }, 'sertifikats_' . now()->format('Ymd_His') . '.xlsx');
+        } catch (\Exception $e) {
+            return $this->error(new Error(Code::SERVER_ERROR, Message::error, $e->getMessage()), false);
         }
     }
 }

@@ -16,11 +16,6 @@ class PembimbingFactory extends Factory
         return [
             'id' => Str::uuid(),
             'nama_pegawai' => $this->faker->name(),
-            'dudi_id1' => dudi::factory(),
-            'dudi_id2' => dudi::factory(),
-            'dudi_id3' => dudi::factory(),
-            'dudi_id4' => dudi::factory(),
-            'dudi_id5' => dudi::factory(),
         ];
     }
 }
