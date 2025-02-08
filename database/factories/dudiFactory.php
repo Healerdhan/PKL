@@ -44,7 +44,7 @@ class DudiFactory extends Factory
         return [
             'id' => (string) Str::orderedUuid(),
             'tempat' => $this->faker->company,
-            'jumlah' => $this->faker->numberBetween(1, 100),
+            // 'jumlah' => $this->faker->numberBetween(1, 100),
             'latitude' => $latitude,
             'longitude' => $longitude,
             'created_at' => now(),

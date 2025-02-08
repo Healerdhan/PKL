@@ -46,7 +46,7 @@ class DudiController extends Controller
                     return [
                         'id' => $dudi->id,
                         'tempat' => $dudi->tempat,
-                        'jumlah' => $dudi->jumlah,
+                        // 'jumlah' => $dudi->jumlah,
                         'latitude' => $dudi->latitude,
                         'longitude' => $dudi->longitude,
                         'distance' => $distance,
@@ -84,7 +84,7 @@ class DudiController extends Controller
         try {
             $validator = Validator::make($request->all(), [
                 'tempat' => 'required|string|max:255',
-                'jumlah' => 'required|integer|min:1|max:14',
+                // 'jumlah' => 'required|integer|min:1|max:14',
                 'latitude' => 'required|numeric',
                 'longitude' => 'required|numeric',
                 'siswa_ids' => 'nullable|array',
@@ -96,7 +96,7 @@ class DudiController extends Controller
 
             $dudi = Dudi::create([
                 'tempat' => $request->input('tempat'),
-                'jumlah' => $request->input('jumlah'),
+                // 'jumlah' => $request->input('jumlah'),
                 'latitude' => $request->input('latitude'),
                 'longitude' => $request->input('longitude'),
             ]);
@@ -138,7 +138,7 @@ class DudiController extends Controller
             $result = array_merge([
                 'id' => $dudi->id,
                 'tempat' => $dudi->tempat,
-                'jumlah' => $dudi->jumlah,
+                // 'jumlah' => $dudi->jumlah,
                 'latitude' => $dudi->latitude,
                 'longitude' => $dudi->longitude,
                 'distance' => $distance,
@@ -157,7 +157,7 @@ class DudiController extends Controller
         try {
             $validator = Validator::make($request->all(), [
                 'tempat' => 'sometimes|required|string|max:255',
-                'jumlah' => 'sometimes|required|integer|min:1|max:14',
+                // 'jumlah' => 'sometimes|required|integer|min:1|max:14',
                 'latitude' => 'sometimes|numeric',
                 'longitude' => 'sometimes|numeric',
                 'siswa_ids' => 'nullable|array',
@@ -174,7 +174,7 @@ class DudiController extends Controller
 
             $dudi->update($request->only([
                 'tempat',
-                'jumlah',
+                // 'jumlah',
                 'latitude',
                 'longitude'
             ]));
