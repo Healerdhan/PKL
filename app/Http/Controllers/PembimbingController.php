@@ -91,7 +91,8 @@ class PembimbingController extends Controller
             return $this->success(Code::POST_SUCCESS, $pembimbing, Message::successCreate);
         } catch (Error | \Exception $e) {
             DB::rollBack();
-            return $this->error(new Error(Code::SERVER_ERROR, Message::errorCreate, $e->getMessage()), false);
+            $error = $this->error(new Error(Code::SERVER_ERROR, Message::errorCreate, $e->getMessage()), false);
+            return response()->json($error, $error['code']);
         }
     }
 

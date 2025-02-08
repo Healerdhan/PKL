@@ -16,8 +16,8 @@ class CreateDudisTable extends Migration
         Schema::create('dudis', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('tempat');
-            $table->decimal('latitude', 10, 7)->nullable();
-            $table->decimal('longitude', 10, 7)->nullable();
+            $table->string('latitude')->nullable();
+            $table->string('longitude')->nullable();
             $table->timestamps();
         });
     }
