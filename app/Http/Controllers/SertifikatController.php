@@ -53,7 +53,7 @@ class SertifikatController extends Controller
                 'message' => 'Berhasil mendapatkan data',
                 'error' => null,
                 'data' => $sertifikat->toArray(),
-                // 'per_page' => $perPage,
+                'per_page' => $perPage,
                 'total_data' => $totalData,
                 'total_pages' => $totalPages,
                 'current_page' => $page,
