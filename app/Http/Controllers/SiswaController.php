@@ -24,7 +24,7 @@ class SiswaController extends Controller
       $siswas = Siswa::query();
       $siswas->with('category');
 
-      if ($request->has('search')) {
+      if ($request->has('cari')) {
         $searchTerm = $request->input('cari');
         $siswas->where(function ($query) use ($searchTerm) {
           $query->where('nama_siswa', 'like', "%{$searchTerm}%")

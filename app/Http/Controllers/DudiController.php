@@ -23,8 +23,8 @@ class DudiController extends Controller
         try {
             $dudis = Dudi::query()->with('siswas');
 
-            if ($request->has('search')) {
-                $searchTerm = $request->input('search');
+            if ($request->has('cari')) {
+                $searchTerm = $request->input('cari');
                 $dudis->where('tempat', 'like', "%{$searchTerm}%");
             }
 

@@ -22,8 +22,8 @@ class PembimbingController extends Controller
         try {
             $pembimbing = Pembimbing::with('dudis');
 
-            if ($request->has('search')) {
-                $searchTerm = $request->input('search');
+            if ($request->has('cari')) {
+                $searchTerm = $request->input('cari');
                 $pembimbing->where('nama_pegawai', 'like', "%{$searchTerm}%");
             }
 
