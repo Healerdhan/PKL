@@ -28,11 +28,11 @@ class DudiController extends Controller
                 $dudis->where('tempat', 'like', "%{$searchTerm}%");
             }
 
-            $perPage = 10;
+            $perPage = $request->input('limit');
             $page = $request->input('page', 1);
             $totalData = $dudis->count();
-            $totalPages = (int) ceil($totalData / $perPage);
-            $dudis = $dudis->forPage($page, $perPage)->get();
+            $totalPages = $perPage ? (int) ceil($totalData / $perPage) : 1;
+            $dudis = $dudis->forPage($page, $perPage ? $perPage : $totalData)->get();
 
             $latitude = $request->input('latitude');
             $longitude = $request->input('longitude');

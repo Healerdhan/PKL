@@ -27,10 +27,11 @@ class PembimbingController extends Controller
                 $pembimbing->where('nama_pegawai', 'like', "%{$searchTerm}%");
             }
 
-            $perPage = 10;
+            $perPage = $request->input('limit');
             $page = $request->input('page', 1);
             $totalData = $pembimbing->count();
-            $totalPages = (int) ceil($totalData / $perPage);
+            $totalPages = $perPage ? (int) ceil($totalData / $perPage) : 1;
+            $pembimbing = $pembimbing->forPage($page, $perPage ? $perPage : $totalData)->get();
 
             $pembimbings = $pembimbing->forPage($page, $perPage)->get();
 

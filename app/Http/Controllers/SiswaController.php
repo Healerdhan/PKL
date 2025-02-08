@@ -32,11 +32,11 @@ class SiswaController extends Controller
         });
       }
 
-      $perPage = 10;
+      $perPage = $request->input('limit');
       $page = $request->input('page', 1);
       $totalData = $siswas->count();
-      $totalPages = (int) ceil($totalData / $perPage);
-      $siswas = $siswas->forPage($page, $perPage)->get();
+      $totalPages = $perPage ? (int) ceil($totalData / $perPage) : 1;
+      $siswas = $siswas->forPage($page, $perPage ? $perPage : $totalData)->get();
 
 
       if ($siswas->isEmpty()) {
