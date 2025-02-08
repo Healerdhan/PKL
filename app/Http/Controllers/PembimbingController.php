@@ -54,7 +54,7 @@ class PembimbingController extends Controller
                 'message' => 'Berhasil mendapatkan data',
                 'error' => null,
                 'data' => $pembimbings->toArray(),
-                'per_page' => $perPage,
+                // 'per_page' => $perPage,
                 'total_data' => $totalData,
                 'total_pages' => $totalPages,
                 'current_page' => $page,
